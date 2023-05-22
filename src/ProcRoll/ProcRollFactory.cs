@@ -39,7 +39,7 @@ namespace ProcRoll
                 }
             }
 
-            var logger = loggerFactory.CreateLogger($"Process.{name}");
+            var logger = loggerFactory.CreateLogger($"ProcRoll.{name}");
             startInfo.StdOut = message => logger.LogInformation("{message}", message);
             startInfo.StdErr = message => logger.LogWarning("{message}", message);
 
