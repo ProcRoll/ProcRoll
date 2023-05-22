@@ -7,7 +7,7 @@ namespace ProcRoll
     {
         private System.Diagnostics.Process? process;
         private Regex? startedRegex;
-        private Dictionary<Regex, string> autoReponses;
+        private readonly Dictionary<Regex, string> autoReponses;
         private readonly TaskCompletionSource starting = new();
         private readonly TaskCompletionSource executing = new();
 

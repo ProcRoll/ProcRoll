@@ -10,7 +10,7 @@
         public Action<string>? StdErr { get; set; }
         public string? StartedStringMatch { get; set; }
         public List<string> DependsOn { get; set; } = new();
-        public StopMethod StopMethod { get; set; }
+        public StopMethod? StopMethod { get; set; }
         public Dictionary<string, string> AutoResponses { get; set; } = new();
     }
 
