@@ -15,17 +15,17 @@ namespace ProcRoll
             this.ProcRollFactory = ProcRollFactory;
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             logger.LogDebug("Starting hosted ProcRoll processes");
+
             var hostedProcesses = ProcRollFactory.Config.Processes
                 .Where(p => p.Value.StartMode == StartMode.Hosted)
                 .Select(p => ProcRollFactory.Start(p.Key).Result).ToList();
 
-            await Task.Yield();
-            stoppingToken.WaitHandle.WaitOne();
+            stoppingToken.Register(() => Task.WaitAll(hostedProcesses.Select(p => ProcRollFactory.Stop(p)).ToArray()));
 
-            await Task.WhenAll(hostedProcesses.Select(p => ProcRollFactory.Stop(p)));
+            return Task.CompletedTask;
         }
     }
 }
