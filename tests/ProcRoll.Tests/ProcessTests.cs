@@ -2,7 +2,7 @@ namespace ProcRoll.Tests;
 
 public class ProcessTests
 {
-    [Test (Description = "Use the static Process.Start method to run a command.")]
+    [Test(Description = "Use the static Process.Start method to run a command.")]
     public async Task Process_StaticStart()
     {
         var outFile = new FileInfo(Path.GetTempFileName());

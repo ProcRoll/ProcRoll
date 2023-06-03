@@ -1,1 +1,1 @@
-﻿ProcRoll.Process.Start("ping.exe", "127.0.0.1").Executing.Wait();
+﻿ProcRoll.Process.Start("dotnet", $"ProcRoll.Tests.Echo.dll \"Success\"").Executing.Wait();

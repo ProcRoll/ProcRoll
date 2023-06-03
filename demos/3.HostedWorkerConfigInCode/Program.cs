@@ -1,11 +1,13 @@
 using ProcRoll;
 
+Directory.SetCurrentDirectory(AppContext.BaseDirectory);
+
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
     {
         services.AddProcRoll(config =>
         {
-            config.Add("Ping", "ping.exe", "/t 127.0.0.1", StartMode.Hosted);
+            config.Add("Echo", "dotnet", "ProcRoll.Tests.Echo.dll \"Success\" --repeat", StartMode.Hosted);
         });
     })
     .Build();
