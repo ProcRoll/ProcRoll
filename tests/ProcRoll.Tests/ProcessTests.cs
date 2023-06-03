@@ -9,7 +9,7 @@ public class ProcessTests
 
         try
         {
-            var process = Process.Start("cmd.exe", $"/c @echo Success!! > {outFile}");
+            var process = Process.Start("ProcRoll.Tests.Echo.exe", $"\"Success!!\" --file \"{outFile}\"");
             await process.Executing;
             Assert.That(File.ReadAllText(outFile.FullName).TrimEnd(), Is.EqualTo($"Success!!"));
         }
