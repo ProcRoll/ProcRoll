@@ -10,11 +10,11 @@ internal class Program
         rootCommand.AddArgument(messageArgument);
         rootCommand.AddOption(fileOption);
 
-        rootCommand.SetHandler((message, file) =>
+        rootCommand.SetHandler(async (message, file) =>
         {
             if (file != null)
             {
-                File.AppendAllText(file.FullName, message);
+                await File.AppendAllTextAsync(file.FullName, message);
             }
             else
             {

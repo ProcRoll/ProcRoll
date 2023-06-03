@@ -9,9 +9,9 @@ public class ProcessTests
 
         try
         {
-            var process = Process.Start("ProcRoll.Tests.Echo.exe", $"\"Success!!\" --file \"{outFile}\"");
+            var process = Process.Start("dotnet", $"ProcRoll.Tests.Echo.dll \"Success\" --file \"{outFile}\"");
             await process.Executing;
-            Assert.That(File.ReadAllText(outFile.FullName).TrimEnd(), Is.EqualTo($"Success!!"));
+            Assert.That(File.ReadAllText(outFile.FullName).TrimEnd(), Is.EqualTo($"Success"));
         }
         finally
         {
