@@ -20,20 +20,11 @@ jobs:
       with:
         dotnet-version: 7.0.x
         
-    - name: Restore dependencies
-      run: dotnet restore
-      
-    - name: Build
-      run: dotnet build --no-restore
-      
-    - name: Pack1
-      run: dotnet pack ./src/ProcRoll.Process/ProcRoll.Process.csproj --verbosity normal
-      
-    - name: Pack2
+    - name: Pack ProcRoll
       run: dotnet pack ./src/ProcRoll/ProcRoll.csproj --verbosity normal
       
-    - name: Upload-Packages
-      uses: actions/upload-artifact@v3
-      with:
-        name: Nuget-Packages
-        path: ./src/**/*.nupkg
+    - name: Pack ProcRoll.Process
+      run: dotnet pack ./src/ProcRoll.Process/ProcRoll.Process.csproj -c Release --no-build --verbosity normal
+      
+    - name: Push to Nuget
+      run: dotnet nuget push "./src/**/*.nupkg" -s https://api.nuget.org/v3/index.json -k oy2drveowm2rlmnx65iq46ztd6csttterh2tvmuasp4v4y
