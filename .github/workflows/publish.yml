@@ -21,7 +21,7 @@ jobs:
         dotnet-version: 7.0.x
         
     - name: Pack ProcRoll
-      run: dotnet pack ./src/ProcRoll/ProcRoll.csproj --verbosity normal
+      run: dotnet pack ./src/ProcRoll/ProcRoll.csproj -c Release --verbosity normal
       
     - name: Pack ProcRoll.Process
       run: dotnet pack ./src/ProcRoll.Process/ProcRoll.Process.csproj -c Release --no-build --verbosity normal
