@@ -3,19 +3,45 @@ using Microsoft.Extensions.Logging;
 
 namespace ProcRoll
 {
+    /// <summary>
+    /// Injectable interface for <see cref="ProcRoll.ProcRollFactory"/>
+    /// </summary>
     public interface IProcRollFactory
     {
+        /// <summary>
+        /// All ProcRoll configurations.
+        /// </summary>
         ProcRollConfiguration Config { get; }
+        /// <summary>
+        /// Start a process using a named configuration.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="args"></param>
+        /// <returns>Instance of <see cref="ProcRoll.Process"/> for started process.</returns>
         Task<Process> Start(string name, params object[] args);
+        /// <summary>
+        /// Stop a process instance.
+        /// </summary>
+        /// <param name="process"></param>
+        /// <returns></returns>
         Task Stop(Process process);
     }
 
+    /// <summary>
+    /// Service class for controlling hosted process.
+    /// </summary>
     public partial class ProcRollFactory : IProcRollFactory
     {
         private readonly ILoggerFactory loggerFactory;
         private readonly Dictionary<string, LinkedList<Process>> startedProcesses = new();
         private readonly List<(Process Parent, Process Child)> processesDependencies = new();
 
+        /// <summary>
+        /// Creates an instance <see cref="ProcRoll.ProcRollFactory"/> with injected dependencies.
+        /// </summary>
+        /// <param name="loggerFactory"></param>
+        /// <param name="config"></param>
+        /// <param name="testConfig"></param>
         public ProcRollFactory(ILoggerFactory loggerFactory, ProcRollConfiguration config, IConfiguration testConfig)
         {
             this.loggerFactory = loggerFactory;
@@ -23,8 +49,17 @@ namespace ProcRoll
             Console.WriteLine(testConfig["test"]);
         }
 
+        /// <summary>
+        /// All ProcRoll configurations.
+        /// </summary>
         public ProcRollConfiguration Config { get; }
 
+        /// <summary>
+        /// Start a process using a named configuration.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="args"></param>
+        /// <returns>Instance of <see cref="ProcRoll.Process"/> for started process.</returns>
         public async Task<Process> Start(string name, params object[] args)
         {
             var startInfo = Config.Processes[name];
@@ -83,6 +118,11 @@ namespace ProcRoll
             return process;
         }
 
+        /// <summary>
+        /// Stop a process instance.
+        /// </summary>
+        /// <param name="process"></param>
+        /// <returns></returns>
         public async Task Stop(Process process)
         {
             if (process.Stopped) return;

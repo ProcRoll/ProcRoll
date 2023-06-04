@@ -3,6 +3,9 @@ using System.Text.RegularExpressions;
 
 namespace ProcRoll
 {
+    /// <summary>
+    /// Wrapper for controlling a single instance of an external process.
+    /// </summary>
     public partial class Process
     {
         private System.Diagnostics.Process? process;
@@ -11,6 +14,12 @@ namespace ProcRoll
         private readonly TaskCompletionSource starting = new();
         private readonly TaskCompletionSource executing = new();
 
+        /// <summary>
+        /// Start an external process.
+        /// </summary>
+        /// <param name="fileName">Name of the external executable file.</param>
+        /// <param name="arguments">Arguments to pass to the process.</param>
+        /// <returns>Instance of <see cref='ProcRoll.Process'/> for started external process.</returns>
         public static Process Start(string fileName, string arguments = default!)
         {
             var process = new Process(new ProcessStartInfo { FileName = fileName, Arguments = arguments });
@@ -18,22 +27,54 @@ namespace ProcRoll
             return process;
         }
 
+        /// <summary>
+        /// Initialize an instance of <see cref='ProcRoll.Process'/> for an external executable.
+        /// </summary>
+        /// <param name="fileName">Name of the external executable file.</param>
+        /// <param name="arguments">Arguments to pass to the process. 
+        /// Can include placeholders using braces <c>{}</c> for input of values when starting the process. </param>
         public Process(string fileName, string arguments = default!)
             : this(new ProcessStartInfo { FileName = fileName, Arguments = arguments }) { }
 
+        /// <summary>
+        /// Initialize an instance of <see cref='ProcRoll.Process'/> for an external executable.
+        /// </summary>
+        /// <param name="startInfo">Instance of <see cref='ProcRoll.ProcessStartInfo'/> with start configuration for external process.</param>
         public Process(ProcessStartInfo startInfo)
         {
             StartInfo = startInfo;
             autoReponses = StartInfo.AutoResponses.ToDictionary(a => new Regex(a.Key, RegexOptions.Compiled), a => a.Value);
         }
 
+        /// <summary>
+        /// Instance of <see cref='ProcRoll.ProcessStartInfo'/> with start configuration for external process.
+        /// </summary>
         public ProcessStartInfo StartInfo { get; }
+        /// <summary>
+        /// <see cref='System.Threading.Tasks.Task'/> for awaiting while process is starting.
+        /// </summary>
         public Task Starting => starting.Task;
+        /// <summary>
+        /// <see cref='System.Threading.Tasks.Task'/> for awaiting while process is executing.
+        /// </summary>
         public Task Executing => executing.Task;
+        /// <summary>
+        /// Process has started.
+        /// </summary>
         public bool Started => starting.Task.IsCompleted;
+        /// <summary>
+        /// Process has stopped.
+        /// </summary>
         public bool Stopped => executing.Task.IsCompleted;
+        /// <summary>
+        /// Write text to console of running process.
+        /// </summary>
         public StreamWriter StandardInput => process?.StandardInput ?? throw new InvalidOperationException("Process not started");
 
+        /// <summary>
+        /// Start the external process.
+        /// </summary>
+        /// <param name="args">Replacement values for argument placeholders.</param>
         public void Start(params object[] args)
         {
             process = new System.Diagnostics.Process
@@ -106,6 +147,10 @@ namespace ProcRoll
                 (StartInfo.StdErr ?? StartInfo.StdOut)?.Invoke(e.Data);
         }
 
+        /// <summary>
+        /// Stop the external process.
+        /// </summary>
+        /// <exception cref="InvalidOperationException"></exception>
         public async Task Stop()
         {
             if (process is null) throw new InvalidOperationException("Process not started");
@@ -125,8 +170,15 @@ namespace ProcRoll
             process.Kill(true);
         }
 
+        /// <summary>
+        /// Raised to allow custom handlers to implement the stopping of the external task.
+        /// </summary>
         public event EventHandler? Stopping;
 
+        /// <summary>
+        /// Send <c>Ctrl+C</c> to standard input for external process.
+        /// </summary>
+        /// <exception cref="InvalidOperationException"></exception>
         public void SendCtrlC()
         {
             if (process is null) throw new InvalidOperationException("Process not started");

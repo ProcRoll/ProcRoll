@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ProcRoll.Process\ProcRoll.Process.csproj" />
+    <ProjectReference Include="..\..\tests\ProcRoll.Tests.Echo\ProcRoll.Tests.Echo.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

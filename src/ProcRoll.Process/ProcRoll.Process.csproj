@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,7 +21,7 @@
 
   <PropertyGroup>
     <PackageId>ProcRoll.Process</PackageId>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Authors>Brett Lyons</Authors>
     <PackageTags>process;background;service;worker;hosting</PackageTags>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>

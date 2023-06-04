@@ -4,10 +4,11 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ProcRoll.Process\ProcRoll.Process.csproj" />
+    <ProjectReference Include="..\ProcRoll.Process\ProcRoll.Process.csproj" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,7 +28,7 @@
 
   <PropertyGroup>
     <PackageId>ProcRoll</PackageId>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Authors>Brett Lyons</Authors>
     <PackageTags>process;background;service;worker;hosting</PackageTags>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -35,5 +36,22 @@
     <RepositoryUrl>https://github.com/ProcRoll/ProcRoll</RepositoryUrl>
     <Description>A simple way to control external processes from your .NET app.</Description>
   </PropertyGroup>
-  
+
+  <!-- Adapted from https://github.com/NuGet/Home/issues/3891#issuecomment-569491001 to include ProjectReference outputs in package. -->
+  <PropertyGroup>
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
+  </PropertyGroup>
+
+  <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="BuildOnlySettings;ResolveReferences">
+
+    <ItemGroup>
+      <_ReferenceCopyLocalPaths Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference')->WithMetadataValue('PrivateAssets', 'All'))"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <BuildOutputInPackage Include="@(_ReferenceCopyLocalPaths)" TargetPath="%(_ReferenceCopyLocalPaths.DestinationSubDirectory)"/>
+    </ItemGroup>
+
+  </Target>
+
 </Project>
