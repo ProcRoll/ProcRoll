@@ -6,10 +6,11 @@ namespace ProcRoll
     /// <summary>
     /// Wrapper for controlling a single instance of an external process.
     /// </summary>
-    public partial class Process
+    public partial class Process : IDisposable
     {
         private System.Diagnostics.Process? process;
         private Regex? startedRegex;
+        private bool disposedValue;
         private readonly Dictionary<Regex, string> autoReponses;
         private readonly TaskCompletionSource starting = new();
         private readonly TaskCompletionSource executing = new();
@@ -24,6 +25,19 @@ namespace ProcRoll
         {
             var process = new Process(new ProcessStartInfo { FileName = fileName, Arguments = arguments });
             process.Start();
+            return process;
+        }
+
+        /// <summary>
+        /// Start an external process.
+        /// </summary>
+        /// <param name="startInfo">Instance of <see cref='ProcRoll.ProcessStartInfo'/> with start configuration for external process.</param>
+        /// <param name="args">Replacement values for argument placeholders.</param>
+        /// <returns>Instance of <see cref='ProcRoll.Process'/> for started external process.</returns>
+        public static Process Start(ProcessStartInfo startInfo, params object[] args)
+        {
+            var process = new Process(startInfo);
+            process.Start(args);
             return process;
         }
 
@@ -209,5 +223,48 @@ namespace ProcRoll
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static partial bool SetConsoleCtrlHandler(ConsoleCtrlDelegate? HandlerRoutine, [MarshalAs(UnmanagedType.Bool)] bool Add);
         internal delegate Boolean ConsoleCtrlDelegate(uint CtrlType);
+
+        /// <summary>
+        /// Clean up resources.
+        /// </summary>
+        /// <param name="disposing">Flag to indicate if called from finalizer or Dispose.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    if (Started && !Stopped)
+                    {
+                        Stop().Wait();
+                    }
+                }
+
+                if (process != null && !process.HasExited)
+                {
+                    process.Kill();
+                }
+                process?.Dispose();
+
+                disposedValue = true;
+            }
+        }
+
+        /// <summary>
+        /// Finaliser.
+        /// </summary>
+        ~Process()
+        {
+            Dispose(disposing: false);
+        }
+
+        /// <summary>
+        /// Managed dispose.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
     }
 }
