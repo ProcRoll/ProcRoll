@@ -29,6 +29,19 @@ namespace ProcRoll
         }
 
         /// <summary>
+        /// Start an external process.
+        /// </summary>
+        /// <param name="startInfo">Instance of <see cref='ProcRoll.ProcessStartInfo'/> with start configuration for external process.</param>
+        /// <param name="args">Replacement values for argument placeholders.</param>
+        /// <returns>Instance of <see cref='ProcRoll.Process'/> for started external process.</returns>
+        public static Process Start(ProcessStartInfo startInfo, params object[] args)
+        {
+            var process = new Process(startInfo);
+            process.Start(args);
+            return process;
+        }
+
+        /// <summary>
         /// Initialize an instance of <see cref='ProcRoll.Process'/> for an external executable.
         /// </summary>
         /// <param name="fileName">Name of the external executable file.</param>
