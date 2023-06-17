@@ -84,6 +84,10 @@ namespace ProcRoll
         /// Write text to console of running process.
         /// </summary>
         public StreamWriter StandardInput => process?.StandardInput ?? throw new InvalidOperationException("Process not started");
+        /// <summary>
+        /// ID of the underlying process.
+        /// </summary>
+        public int ProcessID => process?.Id ?? throw new InvalidOperationException("Process not started.");
 
         /// <summary>
         /// Start the external process.
@@ -91,6 +95,12 @@ namespace ProcRoll
         /// <param name="args">Replacement values for argument placeholders.</param>
         public void Start(params object[] args)
         {
+            if (StartInfo.Starting is not null)
+                StartInfo.Starting(this).Wait();
+
+            if (StartInfo.Started is not null)
+                _ = starting.Task.ContinueWith(_ => StartInfo.Started(this));
+
             process = new System.Diagnostics.Process
             {
                 StartInfo = new System.Diagnostics.ProcessStartInfo
@@ -173,8 +183,11 @@ namespace ProcRoll
                 case StopMethod.CtrlC:
                     SendCtrlC();
                     break;
-                case StopMethod.Default when Stopping is not null:
-                    Stopping.Invoke(this, EventArgs.Empty);
+                case StopMethod.CtrlBreak:
+                    SendCtrlBreak();
+                    break;
+                case StopMethod.Default when StartInfo.Stopping is not null:
+                    await StartInfo.Stopping(this);
                     break;
                 default:
                     process.Kill(true);
@@ -185,22 +198,25 @@ namespace ProcRoll
         }
 
         /// <summary>
-        /// Raised to allow custom handlers to implement the stopping of the external task.
-        /// </summary>
-        public event EventHandler? Stopping;
-
-        /// <summary>
         /// Send <c>Ctrl+C</c> to standard input for external process.
         /// </summary>
         /// <exception cref="InvalidOperationException"></exception>
-        public void SendCtrlC()
+        public void SendCtrlC() => SendCtrlKey(CTRL_C_EVENT);
+
+        /// <summary>
+        /// Send <c>Ctrl+Break</c> to standard input for external process.
+        /// </summary>
+        /// <exception cref="InvalidOperationException"></exception>
+        public void SendCtrlBreak() => SendCtrlKey(CTRL_BREAK_EVENT);
+
+        void SendCtrlKey(uint key)
         {
             if (process is null) throw new InvalidOperationException("Process not started");
             FreeConsole();
             if (AttachConsole((uint)process.Id))
             {
                 SetConsoleCtrlHandler(null, true);
-                GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0);
+                GenerateConsoleCtrlEvent(key, 0);
                 FreeConsole();
             }
             AttachConsole((uint)Environment.ProcessId);
@@ -209,7 +225,8 @@ namespace ProcRoll
         [GeneratedRegex("\\{\\w+\\}")]
         private static partial Regex ArgumentPlaceholder();
 
-        const int CTRL_C_EVENT = 0;
+        const uint CTRL_C_EVENT = 0;
+        const uint CTRL_BREAK_EVENT = 1;
         [LibraryImport("kernel32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static partial bool GenerateConsoleCtrlEvent(uint dwCtrlEvent, uint dwProcessGroupId);

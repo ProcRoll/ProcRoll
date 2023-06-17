@@ -52,6 +52,8 @@ namespace ProcRoll
         /// <param name="stdErr"></param>
         /// <param name="startedStringMatch"></param>
         /// <param name="dependsOn"></param>
+        /// <param name="starting"></param>
+        /// <param name="started"></param>
         /// <param name="stopping"></param>
         /// <returns></returns>
         public static ProcRollConfiguration Add(this ProcRollConfiguration procRollConfiguration,
@@ -65,17 +67,22 @@ namespace ProcRoll
                                                 Action<string>? stdErr = default,
                                                 string? startedStringMatch = default,
                                                 IEnumerable<string>? dependsOn = default,
-                                                Action<Process>? stopping = default)
+                                                Func<Process, Task>? starting = default,
+                                                Func<Process, Task>? started = default,
+                                                Func<Process, Task>? stopping = default)
         {
             var startInfo = procRollConfiguration.Processes.TryGetValue(name, out var value) ? value : new();
 
-            if (string.IsNullOrEmpty(startInfo.FileName)) { startInfo.FileName = fileName; }
-            if (string.IsNullOrEmpty(startInfo.Arguments)) { startInfo.Arguments = arguments; }
+            startInfo.FileName ??= fileName;
+            startInfo.Arguments ??= arguments;
             startInfo.StartMode ??= startMode;
             startInfo.StopMethod ??= stopMethod;
             startInfo.StdOut = stdOut;
             startInfo.StdErr = stdErr;
-            if (string.IsNullOrEmpty(startInfo.StartedStringMatch)) { startInfo.StartedStringMatch = startedStringMatch; }
+            startInfo.StartedStringMatch ??= startedStringMatch;
+            startInfo.Starting ??= starting;
+            startInfo.Started ??= started;
+            startInfo.Stopping ??= stopping;
 
             if (environmentVariables != null)
             {
@@ -88,29 +95,7 @@ namespace ProcRoll
             if (dependsOn != null)
                 startInfo.DependsOn.AddRange(dependsOn);
 
-            ProcRollEventHandlers? eventHandlers;
-            if (stopping != null)
-            {
-                eventHandlers = new() { Stopping = stopping };
-                procRollConfiguration.EventHandlers[name] = eventHandlers;
-            }
-
             procRollConfiguration.Processes[name] = startInfo;
-            return procRollConfiguration;
-        }
-
-        /// <summary>
-        /// Add event handlers for processes in the ProcRollConfiguration.
-        /// </summary>
-        /// <param name="procRollConfiguration"></param>
-        /// <param name="name"></param>
-        /// <param name="handlersConfig"></param>
-        /// <returns></returns>
-        public static ProcRollConfiguration WithEventHandlers(this ProcRollConfiguration procRollConfiguration, string name, Action<ProcRollEventHandlers> handlersConfig)
-        {
-            var handlers = procRollConfiguration.EventHandlers.TryGetValue(name, out var val) ? val : procRollConfiguration.EventHandlers[name] = new();
-            handlersConfig(handlers);
-
             return procRollConfiguration;
         }
     }

@@ -51,6 +51,18 @@
         /// A list of queries with matching response text for automatically controlling the external application through the console.
         /// </summary>
         public Dictionary<string, string> AutoResponses { get; set; } = new();
+        /// <summary>
+        /// Custom action to perform on stopping.
+        /// </summary>
+        public Func<Process, Task>? Stopping { get; set; }
+        /// <summary>
+        /// Custom action to perform before starting.
+        /// </summary>
+        public Func<Process, Task>? Starting { get; set; }
+        /// <summary>
+        /// Custom action to perform after process has started.
+        /// </summary>
+        public Func<Process, Task>? Started { get; set; }
     }
 
     /// <summary>
@@ -84,6 +96,10 @@
         /// <summary>
         /// Will send Ctrl+C to the process.
         /// </summary>
-        CtrlC = 1
+        CtrlC = 1,
+        /// <summary>
+        /// Will send Ctrl+Break to the process.
+        /// </summary>
+        CtrlBreak = 2
     }
 }

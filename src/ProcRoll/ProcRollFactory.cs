@@ -79,13 +79,6 @@ namespace ProcRoll
             startInfo.StdErr = message => logger.LogWarning("{message}", message);
 
             var process = new Process(startInfo);
-            if (Config.EventHandlers.TryGetValue(name, out var handlers))
-            {
-                if (handlers.Stopping != null)
-                {
-                    process.Stopping += handlers.Process_Stopping;
-                }
-            }
             processes.AddLast(process);
 
             foreach (var dependency in startInfo.DependsOn)
