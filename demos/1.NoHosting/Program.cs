@@ -1,1 +1,1 @@
-﻿ProcRoll.Process.Start("dotnet", $"{AppContext.BaseDirectory}ProcRoll.Tests.Echo.dll \"Success\"").Executing.Wait();
+﻿await (await ProcRoll.Process.Start("dotnet", $"{AppContext.BaseDirectory}ProcRoll.Tests.Echo.dll \"Success\"")).Executing;

@@ -7,7 +7,7 @@ IHost host = Host.CreateDefaultBuilder(args)
     {
         services.AddProcRoll(config =>
         {
-            config.Add("Echo", "dotnet", "ProcRoll.Tests.Echo.dll \"Success\" --repeat=true", StartMode.Hosted, StopMethod.CtrlBreak);
+            config.Add("Echo", "dotnet", "ProcRoll.Tests.Echo.dll \"Success\" --repeat", StartMode.Hosted, StopMethod.CtrlBreak);
         });
     })
     .Build();

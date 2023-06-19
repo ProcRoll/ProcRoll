@@ -6,7 +6,7 @@ namespace ProcRoll
     /// <summary>
     /// Wrapper for controlling a single instance of an external process.
     /// </summary>
-    public partial class Process : IDisposable
+    public partial class Process : IDisposable, IAsyncDisposable
     {
         private System.Diagnostics.Process? process;
         private Regex? startedRegex;
@@ -21,10 +21,10 @@ namespace ProcRoll
         /// <param name="fileName">Name of the external executable file.</param>
         /// <param name="arguments">Arguments to pass to the process.</param>
         /// <returns>Instance of <see cref='ProcRoll.Process'/> for started external process.</returns>
-        public static Process Start(string fileName, string arguments = default!)
+        public static async Task<Process> Start(string fileName, string arguments = default!)
         {
             var process = new Process(new ProcessStartInfo { FileName = fileName, Arguments = arguments });
-            process.Start();
+            await process.Start().ConfigureAwait(false);
             return process;
         }
 
@@ -34,10 +34,10 @@ namespace ProcRoll
         /// <param name="startInfo">Instance of <see cref='ProcRoll.ProcessStartInfo'/> with start configuration for external process.</param>
         /// <param name="args">Replacement values for argument placeholders.</param>
         /// <returns>Instance of <see cref='ProcRoll.Process'/> for started external process.</returns>
-        public static Process Start(ProcessStartInfo startInfo, params object[] args)
+        public static async Task<Process> Start(ProcessStartInfo startInfo, params object[] args)
         {
             var process = new Process(startInfo);
-            process.Start(args);
+            await process.Start(args).ConfigureAwait(false);
             return process;
         }
 
@@ -93,13 +93,13 @@ namespace ProcRoll
         /// Start the external process.
         /// </summary>
         /// <param name="args">Replacement values for argument placeholders.</param>
-        public void Start(params object[] args)
+        public async Task Start(params object[] args)
         {
             if (StartInfo.Starting is not null)
-                StartInfo.Starting(this).Wait();
+                await StartInfo.Starting(this).ConfigureAwait(false);
 
             if (StartInfo.Started is not null)
-                _ = starting.Task.ContinueWith(_ => StartInfo.Started(this));
+                _ = starting.Task.ContinueWith(async _ => await StartInfo.Started(this).ConfigureAwait(false));
 
             process = new System.Diagnostics.Process
             {
@@ -146,7 +146,7 @@ namespace ProcRoll
             {
                 if (!starting.Task.IsCompleted) { starting.SetResult(); }
                 if (!executing.Task.IsCompleted) { executing.SetResult(); }
-            });
+            }).ConfigureAwait(false);
         }
 
         private void Process_OutputDataReceived(object sender, System.Diagnostics.DataReceivedEventArgs e)
@@ -212,14 +212,26 @@ namespace ProcRoll
         void SendCtrlKey(uint key)
         {
             if (process is null) throw new InvalidOperationException("Process not started");
-            FreeConsole();
+
+            
+            if (!FreeConsole())
+                throw new InvalidOperationException(FormatPInvokeMessage("FreeConsole()[a]"));
             if (AttachConsole((uint)process.Id))
             {
-                SetConsoleCtrlHandler(null, true);
-                GenerateConsoleCtrlEvent(key, 0);
-                FreeConsole();
+                if (!SetConsoleCtrlHandler(null, true))
+                    throw new InvalidOperationException(FormatPInvokeMessage("SetConsoleCtrlHandler(null, true)"));
+                if (!GenerateConsoleCtrlEvent(key, 0))
+                    throw new InvalidOperationException(FormatPInvokeMessage("GenerateConsoleCtrlEvent(key, 0)"));
+                Thread.Sleep(25);
+                if (!FreeConsole())
+                    throw new InvalidOperationException(FormatPInvokeMessage("FreeConsole()[b]"));
+                if (!SetConsoleCtrlHandler(null, false))
+                    throw new InvalidOperationException(FormatPInvokeMessage("SetConsoleCtrlHandler(null, false)"));
             }
-            AttachConsole((uint)Environment.ProcessId);
+            if (!AttachConsole((uint)Environment.ProcessId))
+                throw new InvalidOperationException(FormatPInvokeMessage("AttachConsole((uint)Environment.ProcessId)"));
+
+            string FormatPInvokeMessage(string message) => $"{message} error ({Marshal.GetLastPInvokeError()}) {Marshal.GetLastPInvokeErrorMessage()}";
         }
 
         [GeneratedRegex("\\{\\w+\\}")]
@@ -227,7 +239,7 @@ namespace ProcRoll
 
         const uint CTRL_C_EVENT = 0;
         const uint CTRL_BREAK_EVENT = 1;
-        [LibraryImport("kernel32.dll")]
+        [LibraryImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static partial bool GenerateConsoleCtrlEvent(uint dwCtrlEvent, uint dwProcessGroupId);
         [LibraryImport("kernel32.dll", SetLastError = true)]
@@ -236,16 +248,17 @@ namespace ProcRoll
         [LibraryImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static partial bool FreeConsole();
-        [LibraryImport("kernel32.dll")]
+        [LibraryImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static partial bool SetConsoleCtrlHandler(ConsoleCtrlDelegate? HandlerRoutine, [MarshalAs(UnmanagedType.Bool)] bool Add);
         internal delegate Boolean ConsoleCtrlDelegate(uint CtrlType);
-
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern uint GetConsoleProcessList(uint[] ProcessList, uint ProcessCount);
         /// <summary>
         /// Clean up resources.
         /// </summary>
         /// <param name="disposing">Flag to indicate if called from finalizer or Dispose.</param>
-        protected virtual void Dispose(bool disposing)
+        protected virtual async Task Dispose(bool disposing)
         {
             if (!disposedValue)
             {
@@ -253,7 +266,7 @@ namespace ProcRoll
                 {
                     if (Started && !Stopped)
                     {
-                        Stop().Wait();
+                        await Stop();
                     }
                 }
 
@@ -272,7 +285,7 @@ namespace ProcRoll
         /// </summary>
         ~Process()
         {
-            Dispose(disposing: false);
+            Dispose(disposing: false).Wait();
         }
 
         /// <summary>
@@ -280,7 +293,16 @@ namespace ProcRoll
         /// </summary>
         public void Dispose()
         {
-            Dispose(disposing: true);
+            Dispose(disposing: true).Wait();
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Async managed dispose.
+        /// </summary>
+        public async ValueTask DisposeAsync()
+        {
+            await Dispose(disposing: true).ConfigureAwait(false);
             GC.SuppressFinalize(this);
         }
     }

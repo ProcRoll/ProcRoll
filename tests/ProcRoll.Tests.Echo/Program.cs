@@ -1,8 +1,13 @@
 ﻿var message = args[0];
 var repeat = args[1..].Contains("--repeat");
 var usebreak = args[1..].Contains("--usebreak");
+var fileArg = Array.IndexOf(args, "--file");
 
-if (repeat)
+if (fileArg > 0)
+{
+    File.WriteAllText(args[fileArg + 1], message);
+}
+else if (repeat)
 {
     CancellationTokenSource stoppingTokenSource = new();
     var stoppingToken = stoppingTokenSource.Token;
@@ -10,7 +15,9 @@ if (repeat)
     {
         e.Cancel = true;
         if (!usebreak || e.SpecialKey == ConsoleSpecialKey.ControlBreak)
+        {
             stoppingTokenSource.Cancel();
+        }
     };
 
     while (!stoppingToken.IsCancellationRequested)

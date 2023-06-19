@@ -13,7 +13,7 @@ IHost host = Host.CreateDefaultBuilder(args)
                        StartMode.Hosted,
                        starting: async p =>
                        {
-                           await Console.Out.WriteLineAsync($"Starting process.");
+                           await Console.Out.WriteLineAsync($"Starting process");
                        },
                        started: async p =>
                        {

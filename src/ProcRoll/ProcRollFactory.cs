@@ -107,7 +107,7 @@ namespace ProcRoll
                 }
             }
 
-            process.Start(args);
+            await process.Start(args);
             return process;
         }
 
