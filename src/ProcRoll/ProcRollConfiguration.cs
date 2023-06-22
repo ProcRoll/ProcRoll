@@ -8,6 +8,6 @@
         /// <summary>
         /// The configured process start configurations.
         /// </summary>
-        public Dictionary<string, ProcessStartInfo> Processes { get; set; } = new Dictionary<string, ProcessStartInfo>();
+        public Dictionary<string, HostedStartInfo> Processes { get; set; } = new Dictionary<string, HostedStartInfo>();
     }
 }

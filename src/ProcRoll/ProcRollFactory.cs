@@ -1,5 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using System.Reflection;
 
 namespace ProcRoll
 {
@@ -33,6 +35,8 @@ namespace ProcRoll
     public partial class ProcRollFactory : IProcRollFactory
     {
         private readonly ILoggerFactory loggerFactory;
+        private readonly IServiceProvider serviceProvider;
+        private readonly IOptions<ProcRollConfiguration> config;
         private readonly Dictionary<string, LinkedList<Process>> startedProcesses = new();
         private readonly List<(Process Parent, Process Child)> processesDependencies = new();
 
@@ -40,19 +44,19 @@ namespace ProcRoll
         /// Creates an instance <see cref="ProcRoll.ProcRollFactory"/> with injected dependencies.
         /// </summary>
         /// <param name="loggerFactory"></param>
+        /// <param name="serviceProvider"></param>
         /// <param name="config"></param>
-        /// <param name="testConfig"></param>
-        public ProcRollFactory(ILoggerFactory loggerFactory, ProcRollConfiguration config, IConfiguration testConfig)
+        public ProcRollFactory(ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IOptions<ProcRollConfiguration> config)
         {
             this.loggerFactory = loggerFactory;
-            Config = config;
-            Console.WriteLine(testConfig["test"]);
+            this.serviceProvider = serviceProvider;
+            this.config = config;
         }
 
         /// <summary>
         /// All ProcRoll configurations.
         /// </summary>
-        public ProcRollConfiguration Config { get; }
+        public ProcRollConfiguration Config => config.Value;
 
         /// <summary>
         /// Start a process using a named configuration.
@@ -78,7 +82,8 @@ namespace ProcRoll
             startInfo.StdOut = message => logger.LogInformation("{message}", message);
             startInfo.StdErr = message => logger.LogWarning("{message}", message);
 
-            var process = new Process(startInfo);
+            var process = startInfo.Handler != null ? (Process)ActivatorUtilities.CreateInstance(serviceProvider, Type.GetType(startInfo.Handler)!, startInfo) : new Process(startInfo);
+
             processes.AddLast(process);
 
             foreach (var dependency in startInfo.DependsOn)

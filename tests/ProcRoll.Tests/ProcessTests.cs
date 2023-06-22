@@ -5,12 +5,13 @@ namespace ProcRoll.Tests;
 
 public class ProcessTests
 {
-    private Stopwatch sw = new();
-    private TimeSpan tmr => sw.Elapsed;
+    private readonly Stopwatch sw = new();
+    private TimeSpan Time => sw.Elapsed;
 
     [SetUp]
     public void Setup()
     {
+        Console.CancelKeyPress += (object? sender, ConsoleCancelEventArgs e) => e.Cancel = true;
         sw.Restart();
     }
 
@@ -21,16 +22,16 @@ public class ProcessTests
 
         try
         {
-            TestContext.WriteLine($"{tmr} Writing to {outFile}");
+            TestContext.WriteLine($"{Time} Writing to {outFile}");
             var process = await Process.Start("dotnet", $"ProcRoll.Tests.Echo.dll \"Success\" --file \"{outFile}\"");
-            TestContext.WriteLine($"{tmr} Waiting for write to finish");
+            TestContext.WriteLine($"{Time} Waiting for write to finish");
             await process.Executing;
-            TestContext.WriteLine($"{tmr} Reading file and verifying contents");
+            TestContext.WriteLine($"{Time} Reading file and verifying contents");
             Assert.That((await File.ReadAllTextAsync(outFile.FullName)).TrimEnd(), Is.EqualTo("Success"));
         }
         finally
         {
-            TestContext.WriteLine($"{tmr} Deleting {outFile}");
+            TestContext.WriteLine($"{Time} Deleting {outFile}");
             outFile.Delete();
         }
     }
@@ -39,7 +40,7 @@ public class ProcessTests
     public async Task Process_StaticStartInfo()
     {
         var outText = new StringBuilder();
-        TestContext.WriteLine($"{tmr} Starting process");
+        TestContext.WriteLine($"{Time} Starting process");
         var startInfo = new ProcessStartInfo
         {
             FileName = "dotnet",
@@ -47,19 +48,20 @@ public class ProcessTests
             StdOut = m => outText.Append(m)
         };
         var process = await Process.Start(startInfo);
-        TestContext.WriteLine($"{tmr} Waiting for write to finish");
+        TestContext.WriteLine($"{Time} Waiting for write to finish");
         await process.Executing;
-        TestContext.WriteLine($"{tmr} Reading output and verifying contents");
+        TestContext.WriteLine($"{Time} Reading output and verifying contents");
         Assert.That(outText.ToString(), Is.EqualTo("Success"));
     }
 
     [Test(Description = "Use the static Process.Start method with a ProcessStartInfo object to start a process.")]
     [TestCase(StopMethod.Default)]
     [TestCase(StopMethod.CtrlC)]
+    [TestCase(StopMethod.CtrlBreak)]
     public async Task Process_Stopping(StopMethod stopMethod)
     {
         var outText = new StringBuilder();
-        TestContext.WriteLine($"{tmr} Starting process");
+        TestContext.WriteLine($"{Time} Starting process");
         var startInfo = new ProcessStartInfo
         {
             FileName = "dotnet",
@@ -70,9 +72,14 @@ public class ProcessTests
         };
         var process = await Process.Start(startInfo);
         await process.Starting;
-        TestContext.WriteLine($"{tmr} Stopping process");
+        TestContext.WriteLine($"{Time} Stopping process");
         await process.Stop();
-        TestContext.WriteLine($"{tmr} Asserting process stopped");
+        TestContext.WriteLine($"{Time} Asserting process stopped");
         Assert.That(process.Stopped, Is.True);
+    }
+
+    private void Console_CancelKeyPress(object? sender, ConsoleCancelEventArgs e)
+    {
+        throw new NotImplementedException();
     }
 }
