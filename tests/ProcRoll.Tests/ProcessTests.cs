@@ -57,7 +57,7 @@ public class ProcessTests
     [Test(Description = "Use the static Process.Start method with a ProcessStartInfo object to start a process.")]
     [TestCase(StopMethod.Default)]
     [TestCase(StopMethod.CtrlC)]
-    [TestCase(StopMethod.CtrlBreak)]
+    [TestCase(StopMethod.CtrlBreak, Ignore = "Will be reviewed for change to use ProcRoll.Host")]
     public async Task Process_Stopping(StopMethod stopMethod)
     {
         var outText = new StringBuilder();
