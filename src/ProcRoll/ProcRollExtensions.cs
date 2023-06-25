@@ -11,7 +11,9 @@ namespace ProcRoll
         /// <summary>
         /// Enable ProcRoll. Configuration is read from "ProcRoll" section.
         /// </summary>
-        /// <returns></returns>
+        /// <param name="host">IHostBuilder</param>
+        /// <param name="configureProcRoll">Delegate for configuring ProcRoll settings.</param>
+        /// <returns>IHostBuilder</returns>
         public static IHostBuilder ConfigureProcRoll(this IHostBuilder host, Action<ProcRollBuilder> configureProcRoll)
         {
             var builder = new ProcRollBuilder(host);
@@ -21,10 +23,10 @@ namespace ProcRoll
         }
 
         /// <summary>
-        /// 
+        /// Enable ProcRoll. Configuration is read from "ProcRoll" section.
         /// </summary>
-        /// <param name="host"></param>
-        /// <returns></returns>
+        /// <param name="host">IHostBuilder</param>
+        /// <returns>IHostBuilder</returns>
         public static IHostBuilder ConfigureProcRoll(this IHostBuilder host)
         {
             host.ConfigureServices((hostContext, services) =>

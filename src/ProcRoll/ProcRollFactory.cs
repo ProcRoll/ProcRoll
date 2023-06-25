@@ -60,8 +60,8 @@ namespace ProcRoll
         /// <summary>
         /// Start a process using a named configuration.
         /// </summary>
-        /// <param name="name"></param>
-        /// <param name="args"></param>
+        /// <param name="name">Name of the process configuration.</param>
+        /// <param name="args">Optional values to substitue argument placeholders with.</param>
         /// <returns>Instance of <see cref="ProcRoll.Process"/> for started process.</returns>
         public async Task<Process> Start(string name, params object[] args)
         {
@@ -118,8 +118,7 @@ namespace ProcRoll
         /// <summary>
         /// Stop a process instance.
         /// </summary>
-        /// <param name="process"></param>
-        /// <returns></returns>
+        /// <param name="process">The process to stop.</param>
         public async Task Stop(Process process)
         {
             if (process.Stopped) return;

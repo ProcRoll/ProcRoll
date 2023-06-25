@@ -40,11 +40,6 @@ public partial class Process : IDisposable, IAsyncDisposable
         return process;
     }
 
-    protected Process() : this(new ProcessStartInfo())
-    {
-
-    }
-
     /// <summary>
     /// Initialize an instance of <see cref='ProcRoll.Process'/> for an external executable.
     /// </summary>
@@ -83,22 +78,22 @@ public partial class Process : IDisposable, IAsyncDisposable
     /// Process has stopped.
     /// </summary>
     public bool Stopped => executing.Task.IsCompleted;
-    public virtual Task OnStarting()
-    {
-        return Task.CompletedTask;
-    }
-    public virtual Task OnStarted()
-    {
-        return Task.CompletedTask;
-    }
-    public virtual Task OnStopping()
-    {
-        return Task.CompletedTask;
-    }
-    public virtual Task OnStopped()
-    {
-        return Task.CompletedTask;
-    }
+    /// <summary>
+    /// Action executed before starting.
+    /// </summary>
+    public virtual Task OnStarting() => Task.CompletedTask;
+    /// <summary>
+    /// Action executed after starting.
+    /// </summary>
+    public virtual Task OnStarted() => Task.CompletedTask;
+    /// <summary>
+    /// Action executed before stopping.
+    /// </summary>
+    public virtual Task OnStopping() => Task.CompletedTask;
+    /// <summary>
+    /// Action executed after stopping.
+    /// </summary>
+    public virtual Task OnStopped() => Task.CompletedTask;
     /// <summary>
     /// Write text to console of running process.
     /// </summary>
