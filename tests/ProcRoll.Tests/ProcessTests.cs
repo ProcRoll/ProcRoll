@@ -45,7 +45,7 @@ public class ProcessTests
         {
             FileName = "dotnet",
             Arguments = $"ProcRoll.Tests.Echo.dll \"Success\"",
-            StdOut = m => outText.Append(m)
+            //StdOut = m => outText.Append(m)
         };
         var process = await Process.Start(startInfo);
         TestContext.WriteLine($"{Time} Waiting for write to finish");
@@ -67,8 +67,8 @@ public class ProcessTests
             FileName = "dotnet",
             Arguments = $"ProcRoll.Tests.Echo.dll \"Success\" --repeat",
             StartedStringMatch = "Success",
-            StopMethod = stopMethod,
-            StdOut = TestContext.WriteLine
+            //StopMethod = stopMethod,
+            //StdOut = TestContext.WriteLine
         };
         var process = await Process.Start(startInfo);
         await process.Starting;

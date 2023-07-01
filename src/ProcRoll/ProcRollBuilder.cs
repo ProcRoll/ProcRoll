@@ -59,7 +59,7 @@ namespace ProcRoll
                 EnvironmentVariables = environmentVariables?.ToDictionary(d => d.Key, d => d.Value)!,
                 StartedStringMatch = startedStringMatch,
                 DependsOn = dependsOn?.ToList()!,
-                Handler = handler.AssemblyQualifiedName
+                Handler = handler?.AssemblyQualifiedName
             });
         }
 
@@ -79,7 +79,6 @@ namespace ProcRoll
                     [$"ProcRoll:Processes:{name}:StartMode"] = hostedStartInfo.StartMode.ToString(),
                     [$"ProcRoll:Processes:{name}:StopMethod"] = hostedStartInfo.StopMethod.ToString(),
                     [$"ProcRoll:Processes:{name}:StartedStringMatch"] = hostedStartInfo.StartedStringMatch,
-                    [$"ProcRoll:Processes:{name}:Handler"] = hostedStartInfo.Handler
                 };
                 if (hostedStartInfo.EnvironmentVariables != null)
                 {

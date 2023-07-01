@@ -1,5 +1,11 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.IO.Pipes;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.RegularExpressions;
+
+[assembly: InternalsVisibleTo("ProcRoll")]
+[assembly: InternalsVisibleTo("ProcRoll.Host")]
 
 namespace ProcRoll;
 
@@ -11,6 +17,7 @@ public partial class Process : IDisposable, IAsyncDisposable
     private System.Diagnostics.Process? process;
     private Regex? startedRegex;
     private bool disposedValue;
+    private NamedPipeServerStream controlPipe;
     private readonly TaskCompletionSource starting = new();
     private readonly TaskCompletionSource executing = new();
 
@@ -31,11 +38,12 @@ public partial class Process : IDisposable, IAsyncDisposable
     /// Start an external process.
     /// </summary>
     /// <param name="startInfo">Instance of <see cref='ProcRoll.ProcessStartInfo'/> with start configuration for external process.</param>
+    /// <param name="actions"></param>
     /// <param name="args">Replacement values for argument placeholders.</param>
     /// <returns>Instance of <see cref='ProcRoll.Process'/> for started external process.</returns>
-    public static async Task<Process> Start(ProcessStartInfo startInfo, params object[] args)
+    public static async Task<Process> Start(ProcessStartInfo startInfo, ProcessActions? actions = default, params object[] args)
     {
-        var process = new Process(startInfo);
+        var process = new Process(startInfo, actions);
         await process.Start(args).ConfigureAwait(false);
         return process;
     }
@@ -53,15 +61,22 @@ public partial class Process : IDisposable, IAsyncDisposable
     /// Initialize an instance of <see cref='ProcRoll.Process'/> for an external executable.
     /// </summary>
     /// <param name="startInfo">Instance of <see cref='ProcRoll.ProcessStartInfo'/> with start configuration for external process.</param>
-    public Process(ProcessStartInfo startInfo)
+    /// <param name="actions"></param>
+    public Process(ProcessStartInfo startInfo, ProcessActions? actions = default)
     {
         StartInfo = startInfo;
+        ProcessActions = actions ?? new ProcessActions();
     }
 
     /// <summary>
     /// Instance of <see cref='ProcRoll.ProcessStartInfo'/> with start configuration for external process.
     /// </summary>
     public ProcessStartInfo StartInfo { get; }
+    /// <summary>
+    /// Instance of <see cref='ProcRoll.ProcessActions'/> with actions for external process.
+    /// </summary>
+    public ProcessActions ProcessActions { get; }
+
     /// <summary>
     /// <see cref='System.Threading.Tasks.Task'/> for awaiting while process is starting.
     /// </summary>
@@ -79,143 +94,208 @@ public partial class Process : IDisposable, IAsyncDisposable
     /// </summary>
     public bool Stopped => executing.Task.IsCompleted;
     /// <summary>
-    /// Action executed before starting.
-    /// </summary>
-    public virtual Task OnStarting() => Task.CompletedTask;
-    /// <summary>
-    /// Action executed after starting.
-    /// </summary>
-    public virtual Task OnStarted() => Task.CompletedTask;
-    /// <summary>
-    /// Action executed before stopping.
-    /// </summary>
-    public virtual Task OnStopping() => Task.CompletedTask;
-    /// <summary>
-    /// Action executed after stopping.
-    /// </summary>
-    public virtual Task OnStopped() => Task.CompletedTask;
-    /// <summary>
     /// Write text to console of running process.
     /// </summary>
     public StreamWriter StandardInput => process?.StandardInput ?? throw new InvalidOperationException("Process not started");
-    /// <summary>
-    /// ID of the underlying process.
-    /// </summary>
-    public int ProcessID => process?.Id ?? throw new InvalidOperationException("Process not started.");
 
     /// <summary>
     /// Start the external process.
     /// </summary>
     /// <param name="args">Replacement values for argument placeholders.</param>
-    public virtual async Task Start(params object[] args)
+    public async Task Start(params object[] args)
     {
-        await OnStarting().ConfigureAwait(false);
+        await Task.Run(() => ProcessActions.OnStarting?.Invoke()).ConfigureAwait(false);
 
-        process = new System.Diagnostics.Process
-        {
-            StartInfo = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = StartInfo.FileName,
-                Arguments = StartInfo.Arguments,
-            }
-        };
-        if (process.StartInfo.Arguments != null && args.Length > 0)
+        var arguments = StartInfo.Arguments ?? string.Empty;
+        if (args.Length > 0)
         {
             var replacements = new Queue<object>(args);
-            process.StartInfo.Arguments = ArgumentPlaceholder().Replace(process.StartInfo.Arguments, _ => replacements.Dequeue().ToString()!);
+            arguments = ArgumentPlaceholder().Replace(arguments, _ => replacements.Dequeue().ToString()!);
         }
 
-        foreach (var env in StartInfo.EnvironmentVariables)
+        if (StartInfo.UseShellExecute)
         {
-            process.StartInfo.EnvironmentVariables[env.Key] = env.Value;
+            await StartDetached(arguments).ConfigureAwait(false);
         }
-        if (StartInfo.StdOut != null)
+        else
         {
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.RedirectStandardError = true;
-            process.StartInfo.RedirectStandardInput = true;
-            process.OutputDataReceived += Process_OutputDataReceived;
-            process.ErrorDataReceived += Process_ErrorDataReceived;
-        }
-        if (StartInfo.StartedStringMatch != null)
-            startedRegex = new Regex(StartInfo.StartedStringMatch, RegexOptions.Compiled);
-
-        process.Start();
-
-        if (StartInfo.StdOut != null)
-        {
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
+            await StartAttached(arguments).ConfigureAwait(false);
         }
 
-        if (startedRegex == null)
-            starting.SetResult();
-
-        _ = process.WaitForExitAsync().ContinueWith(_ =>
+        _ = process!.WaitForExitAsync().ContinueWith(_ =>
         {
             if (!starting.Task.IsCompleted) { starting.SetResult(); }
             if (!executing.Task.IsCompleted) { executing.SetResult(); }
         }).ConfigureAwait(false);
 
-        await OnStarted().ConfigureAwait(false);
+        await Task.Run(() => ProcessActions.OnStarted?.Invoke()).ConfigureAwait(false);
     }
 
-    private void Process_OutputDataReceived(object sender, System.Diagnostics.DataReceivedEventArgs e)
+    private async Task StartAttached(string arguments)
     {
-        if (e.Data != null)
+        process = new System.Diagnostics.Process
         {
-            StdOut(e.Data);
-            if (startedRegex != null && !Started)
-                if (startedRegex.IsMatch(e.Data))
-                    starting.SetResult();
+            StartInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = StartInfo.FileName,
+                Arguments = arguments
+            }
+        };
+
+        foreach (var env in StartInfo.EnvironmentVariables)
+        {
+            process.StartInfo.EnvironmentVariables[env.Key] = env.Value;
         }
+
+        if (StartInfo.StartedStringMatch != null)
+        {
+            startedRegex = new Regex(StartInfo.StartedStringMatch, RegexOptions.Compiled);
+        }
+
+        process.StartInfo.UseShellExecute = false;
+        process.StartInfo.RedirectStandardOutput = true;
+        process.StartInfo.RedirectStandardError = true;
+        process.StartInfo.RedirectStandardInput = true;
+        process.OutputDataReceived += Process_OutputDataReceived;
+        process.ErrorDataReceived += Process_ErrorDataReceived;
+        void Process_OutputDataReceived(object sender, System.Diagnostics.DataReceivedEventArgs e) => HandleConsoleOutput(e.Data, "Out");
+        void Process_ErrorDataReceived(object sender, System.Diagnostics.DataReceivedEventArgs e) => HandleConsoleOutput(e.Data, "Err");
+
+        await Task.Run(() =>
+        {
+            process.Start();
+
+        }).ConfigureAwait(false);
+
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+
+        if (startedRegex == null)
+            starting.SetResult();
     }
 
-    private void Process_ErrorDataReceived(object sender, System.Diagnostics.DataReceivedEventArgs e)
+    private void HandleConsoleOutput(string? data, string source)
     {
-        if (e.Data != null)
-            StdErr(e.Data);
+        if (data == null)
+            return;
+
+        (source switch
+        {
+            "Out" => ProcessActions.StdOut ?? Console.Out.WriteLine,
+            "Err" => ProcessActions.StdErr ?? Console.Error.WriteLine,
+            _ => throw new NotImplementedException()
+        }).Invoke(data);
+
+        if (!Started && startedRegex != null && startedRegex.IsMatch(data))
+            starting.SetResult();
     }
 
-    /// <summary>
-    /// Receives standard output data from console process.
-    /// </summary>
-    /// <param name="data"></param>
-    public virtual void StdOut(string data) => StartInfo.StdOut?.Invoke(data);
+    private async Task StartDetached(string arguments)
+    {
+        var detachedId = Random.Shared.Next().ToString("x8");
+        controlPipe = new NamedPipeServerStream($"ProcRoll:{detachedId}", PipeDirection.Out);
 
-    /// <summary>
-    /// Receives standard error data from console process.
-    /// </summary>
-    /// <param name="data"></param>
-    public virtual void StdErr(string data) => (StartInfo.StdErr ?? StartInfo.StdOut)?.Invoke(data);
+        var processStartInfo = new System.Diagnostics.ProcessStartInfo();
+        processStartInfo.UseShellExecute = true;
+
+        StringBuilder hostArgs = new();
+        hostArgs.Append($"Host:ID={detachedId} ");
+        hostArgs.Append($"Process:FileName=\"{StartInfo.FileName}\"");
+        if (!string.IsNullOrWhiteSpace(arguments))
+            hostArgs.Append($" Process:Arguments=\"{arguments.Replace("\"", "\\\"")}\"");
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            processStartInfo.FileName = $"{AppContext.BaseDirectory}ProcRoll.Host.exe";
+            processStartInfo.Arguments = hostArgs.ToString();
+        }
+        else
+        {
+            processStartInfo.FileName = "dotnet";
+            processStartInfo.Arguments = $"{AppContext.BaseDirectory}ProcRoll.Host.dll {hostArgs}";
+        }
+
+        process = new System.Diagnostics.Process { StartInfo = processStartInfo };
+        process.Start();
+
+        await controlPipe.WaitForConnectionAsync().ConfigureAwait(false);
+    }
 
     /// <summary>
     /// Stop the external process.
     /// </summary>
     /// <exception cref="InvalidOperationException"></exception>
-    public virtual async Task Stop()
+    public async Task Stop(StopMethod stopMethod = StopMethod.Default)
     {
-        await OnStopping().ConfigureAwait(false);
-
         if (process is null) throw new InvalidOperationException("Process not started");
-        switch (StartInfo.StopMethod)
+
+        await Task.Run(() => ProcessActions.OnStopping?.Invoke()).ConfigureAwait(false);
+
+        if (StartInfo.UseShellExecute)
         {
-            case StopMethod.CtrlC:
-                SendCtrlC();
-                break;
-            case StopMethod.CtrlBreak:
-                SendCtrlBreak();
-                break;
-            default:
-                if (!process.CloseMainWindow())
-                    process.Kill(true);
-                break;
+            using var sw = new StreamWriter(controlPipe) { AutoFlush = true };
+            await sw.WriteLineAsync(CONTROL_STOP).ConfigureAwait(false);
+            await process.WaitForExitAsync().ConfigureAwait(false);
+        }
+        else
+        {
+            switch (stopMethod)
+            {
+                case StopMethod.CtrlC:
+                    SendCtrlC();
+                    break;
+                case StopMethod.CtrlBreak:
+                    SendCtrlBreak();
+                    break;
+                default:
+                    if (!process.CloseMainWindow())
+                        process.Kill(true);
+                    break;
+            }
         }
         await Task.WhenAny(Executing, Task.Delay(5000));
         process.Kill(true);
 
-        await OnStopped().ConfigureAwait(false);
+        await Task.Run(() => ProcessActions.OnStopped?.Invoke()).ConfigureAwait(false);
+    }
+
+
+    /// <summary>
+    /// Stop the external process.
+    /// </summary>
+    /// <exception cref="InvalidOperationException"></exception>
+    public async Task Stop()
+    {
+        if (process is null) throw new InvalidOperationException("Process not started");
+
+        await Task.Run(() => ProcessActions.OnStopping?.Invoke()).ConfigureAwait(false);
+
+        if (StartInfo.UseShellExecute)
+        {
+            using var sw = new StreamWriter(controlPipe) { AutoFlush = true };
+            await sw.WriteLineAsync(CONTROL_STOP).ConfigureAwait(false);
+            await process.WaitForExitAsync().ConfigureAwait(false);
+        }
+        else
+        {
+            switch (StartInfo.StopMethod)
+            {
+                case StopMethod.CtrlC:
+                    SendCtrlC();
+                    break;
+                case StopMethod.CtrlBreak:
+                    SendCtrlBreak();
+                    break;
+                default:
+                    if (!process.CloseMainWindow())
+                        process.Kill(true);
+                    break;
+            }
+        }
+        await Task.WhenAny(Executing, Task.Delay(5000));
+        process.Kill(true);
+
+        await Task.Run(() => ProcessActions.OnStopped?.Invoke()).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -248,33 +328,16 @@ public partial class Process : IDisposable, IAsyncDisposable
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool GenerateConsoleCtrlEvent(uint dwCtrlEvent, uint dwProcessGroupId);
-    const uint ATTACH_PARENT_PROCESS = 0x0ffffffff;
-    [LibraryImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    internal static partial bool AttachConsole(uint dwProcessId);
-    [LibraryImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    internal static partial bool FreeConsole();
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool SetConsoleCtrlHandler(ConsoleCtrlDelegate? HandlerRoutine, [MarshalAs(UnmanagedType.Bool)] bool Add);
     internal delegate Boolean ConsoleCtrlDelegate(uint CtrlType);
-    [LibraryImport("kernel32.dll", SetLastError = true)]
-    internal static partial uint GetConsoleProcessList(uint[] ProcessList, uint ProcessCount);
-    [LibraryImport("kernel32.dll", SetLastError = true)]
-    internal static partial IntPtr GetConsoleWindow();
-    const int STD_INPUT_HANDLE = -10;
-    const int STD_OUTPUT_HANDLE = -11;
-    const int STD_ERROR_HANDLE = -12;
-    const int INVALID_HANDLE_VALUE = -1;
-    [LibraryImport("kernel32.dll", SetLastError = true)]
-    internal static partial IntPtr GetStdHandle(int nStdHandle);
 
     /// <summary>
     /// Clean up resources.
     /// </summary>
     /// <param name="disposing">Flag to indicate if called from finalizer or Dispose.</param>
-    protected virtual async Task Dispose(bool disposing)
+    protected async Task Dispose(bool disposing)
     {
         if (!disposedValue)
         {
@@ -284,6 +347,7 @@ public partial class Process : IDisposable, IAsyncDisposable
                 {
                     await Stop();
                 }
+                await controlPipe.DisposeAsync().ConfigureAwait(false);
             }
 
             if (process != null && !process.HasExited)
@@ -309,7 +373,7 @@ public partial class Process : IDisposable, IAsyncDisposable
     /// </summary>
     public void Dispose()
     {
-        Dispose(disposing: true).Wait();
+        Dispose(disposing: true).RunSynchronously();
         GC.SuppressFinalize(this);
     }
 
@@ -321,4 +385,6 @@ public partial class Process : IDisposable, IAsyncDisposable
         await Dispose(disposing: true).ConfigureAwait(false);
         GC.SuppressFinalize(this);
     }
+
+    internal const string CONTROL_STOP = "STOP";
 }

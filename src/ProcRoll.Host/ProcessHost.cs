@@ -1,32 +1,53 @@
+using Microsoft.Extensions.Options;
+using System.Diagnostics;
+using System.IO.Pipes;
+
 namespace ProcRoll;
 
-/// <summary>
-/// Host for control a single external process.
-/// </summary>
 public class ProcessHost : BackgroundService
 {
-    private readonly ILogger<ProcessHost> _logger;
+    private readonly IOptions<HostConfig> hostConfigOptions;
+    private readonly IOptions<ProcessStartInfo> processStartInfoOptions;
+    private readonly IHostApplicationLifetime hostApplicationLifetime;
+    private readonly HostConfig hostConfig;
+    private readonly ProcessStartInfo processStartInfo;
+    private Process? process;
 
-    /// <summary>
-    /// Construct instance from dependency injection.
-    /// </summary>
-    /// <param name="logger">Process logger.</param>
-    public ProcessHost(ILogger<ProcessHost> logger)
+    public ProcessHost(IOptions<HostConfig> hostConfigOptions, IOptions<ProcessStartInfo> processStartInfoOptions, IHostApplicationLifetime hostApplicationLifetime)
     {
-        _logger = logger;
+        this.hostConfigOptions = hostConfigOptions;
+        this.processStartInfoOptions = processStartInfoOptions;
+        this.hostApplicationLifetime = hostApplicationLifetime;
+        hostConfig = hostConfigOptions.Value;
+        processStartInfo = processStartInfoOptions.Value;
     }
 
-    /// <summary>
-    /// Start the external process.
-    /// </summary>
-    /// <param name="stoppingToken">Token for receiving signal to stop.</param>
-    /// <returns></returns>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        while (!stoppingToken.IsCancellationRequested)
+        if (processStartInfo.StopMethod == StopMethod.Default)
+            processStartInfo.StopMethod = StopMethod.CtrlC;
+
+        process = new Process(processStartInfo);
+        await process.Start();
+        //process.OnStopped = hostApplicationLifetime.StopApplication();
+
+        stoppingToken.Register(() => process.Stop().Wait());
+
+        var controlHandle = hostConfig.ID ?? throw new ArgumentException("'Control' missing from arguments.");
+        using var controlPipe = new AnonymousPipeClientStream(controlHandle);
+        using var sr = new StreamReader(controlPipe);
+        string? command;
+        while ((command = await sr.ReadLineAsync(stoppingToken)) != null)
         {
-            _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-            await Task.Delay(1000, stoppingToken);
+            switch (command)
+            {
+                case "Stop":
+                    hostApplicationLifetime.StopApplication();
+                    break;
+                default:
+                    await Console.Out.WriteLineAsync(command);
+                    break;
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Worker">
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\ProcRoll.Host\ProcRoll.Host.csproj" />
     <ProjectReference Include="..\..\src\ProcRoll.Process\ProcRoll.Process.csproj" />
     <ProjectReference Include="..\..\src\ProcRoll\ProcRoll.csproj" />
     <ProjectReference Include="..\..\tests\ProcRoll.Tests.Echo\ProcRoll.Tests.Echo.csproj" />

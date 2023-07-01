@@ -78,10 +78,13 @@ namespace ProcRoll
             }
 
             var logger = loggerFactory.CreateLogger($"ProcRoll.{name}");
-            startInfo.StdOut = message => logger.LogInformation("{message}", message);
-            startInfo.StdErr = message => logger.LogWarning("{message}", message);
+            var actions = new ProcessActions
+            {
+                StdOut = message => logger.LogInformation("{message}", message),
+                StdErr = message => logger.LogWarning("{message}", message)
+            };
 
-            var process = startInfo.Handler != null ? (Process)ActivatorUtilities.CreateInstance(serviceProvider, Type.GetType(startInfo.Handler)!, startInfo) : new Process(startInfo);
+            var process = new Process(startInfo);
 
             processes.AddLast(process);
 

@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ProcRoll.Process\ProcRoll.Process.csproj" PrivateAssets="All" />
+    <ProjectReference Include="..\ProcRoll.Host\ProcRoll.Host.csproj" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>

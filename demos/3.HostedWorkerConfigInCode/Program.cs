@@ -5,7 +5,7 @@ Directory.SetCurrentDirectory(AppContext.BaseDirectory);
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureProcRoll(configProcRoll =>
     {
-        configProcRoll.Add("Echo", "dotnet", "ProcRoll.Tests.Echo.dll \"Success\" --repeat", StartMode.Hosted, StopMethod.CtrlC);
+        configProcRoll.Add("Echo", "ProcRoll.Tests.Echo.exe", "Success --repeat", StartMode.Hosted, StopMethod.CtrlC);
     })
     .Build();
 

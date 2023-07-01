@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace>ProcRoll</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,6 +29,7 @@
     <PackageReadmeFile>README.nuget.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/ProcRoll/ProcRoll</RepositoryUrl>
     <Description>A simple way to control external processes from your .NET app.</Description>
+    <RootNamespace>ProcRoll</RootNamespace>
   </PropertyGroup>
 
 </Project>
