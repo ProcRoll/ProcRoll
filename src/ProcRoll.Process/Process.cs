@@ -98,6 +98,8 @@ public partial class Process : IDisposable, IAsyncDisposable
     /// </summary>
     public StreamWriter StandardInput => process?.StandardInput ?? throw new InvalidOperationException("Process not started");
 
+    internal bool IsShelled { get; set; } = false;
+
     /// <summary>
     /// Start the external process.
     /// </summary>
@@ -193,7 +195,7 @@ public partial class Process : IDisposable, IAsyncDisposable
     private async Task StartDetached(string arguments)
     {
         var detachedId = Random.Shared.Next().ToString("x8");
-        controlPipe = new NamedPipeServerStream($"ProcRoll:{detachedId}", PipeDirection.Out);
+        controlPipe = new NamedPipeServerStream(string.Concat(PIPE_PREFIX, detachedId), PipeDirection.Out);
 
         var processStartInfo = new System.Diagnostics.ProcessStartInfo();
         processStartInfo.UseShellExecute = true;
@@ -225,45 +227,6 @@ public partial class Process : IDisposable, IAsyncDisposable
     /// Stop the external process.
     /// </summary>
     /// <exception cref="InvalidOperationException"></exception>
-    public async Task Stop(StopMethod stopMethod = StopMethod.Default)
-    {
-        if (process is null) throw new InvalidOperationException("Process not started");
-
-        await Task.Run(() => ProcessActions.OnStopping?.Invoke()).ConfigureAwait(false);
-
-        if (StartInfo.UseShellExecute)
-        {
-            using var sw = new StreamWriter(controlPipe) { AutoFlush = true };
-            await sw.WriteLineAsync(CONTROL_STOP).ConfigureAwait(false);
-            await process.WaitForExitAsync().ConfigureAwait(false);
-        }
-        else
-        {
-            switch (stopMethod)
-            {
-                case StopMethod.CtrlC:
-                    SendCtrlC();
-                    break;
-                case StopMethod.CtrlBreak:
-                    SendCtrlBreak();
-                    break;
-                default:
-                    if (!process.CloseMainWindow())
-                        process.Kill(true);
-                    break;
-            }
-        }
-        await Task.WhenAny(Executing, Task.Delay(5000));
-        process.Kill(true);
-
-        await Task.Run(() => ProcessActions.OnStopped?.Invoke()).ConfigureAwait(false);
-    }
-
-
-    /// <summary>
-    /// Stop the external process.
-    /// </summary>
-    /// <exception cref="InvalidOperationException"></exception>
     public async Task Stop()
     {
         if (process is null) throw new InvalidOperationException("Process not started");
@@ -280,20 +243,28 @@ public partial class Process : IDisposable, IAsyncDisposable
         {
             switch (StartInfo.StopMethod)
             {
+                case StopMethod.Default when IsShelled:
+                    SendCtrlC();
+                    break;
+                case StopMethod.Default when !IsShelled:
+                    process.Kill();
+                    break;
+                case StopMethod.Kill:
+                    process.Kill();
+                    break;
+                case StopMethod.Close:
+                    process.CloseMainWindow();
+                    break;
                 case StopMethod.CtrlC:
                     SendCtrlC();
                     break;
                 case StopMethod.CtrlBreak:
                     SendCtrlBreak();
                     break;
-                default:
-                    if (!process.CloseMainWindow())
-                        process.Kill(true);
-                    break;
             }
         }
         await Task.WhenAny(Executing, Task.Delay(5000));
-        process.Kill(true);
+        process.Kill();
 
         await Task.Run(() => ProcessActions.OnStopped?.Invoke()).ConfigureAwait(false);
     }
@@ -386,5 +357,6 @@ public partial class Process : IDisposable, IAsyncDisposable
         GC.SuppressFinalize(this);
     }
 
+    internal const string PIPE_PREFIX = "ProcRoll:";
     internal const string CONTROL_STOP = "STOP";
 }

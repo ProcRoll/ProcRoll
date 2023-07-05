@@ -1,17 +1,11 @@
 ﻿using ProcRoll;
+using System.Threading.Channels;
 
-var p1 = await Process.Start("dotnet", $"{AppContext.BaseDirectory}ProcRoll.Tests.Echo.dll \"Success\" --repeat");
-
-//var startInfo = new ProcessStartInfo { FileName = "dotnet", Arguments = $"{AppContext.BaseDirectory}ProcRoll.Tests.Echo.dll \"{{message}}\"", UseShellExecute = true };
-//await (await Process.Start(startInfo, "Substitution 1")).Executing;
-//await (await Process.Start(startInfo, "Substitution 2")).Executing;
-
-var actions = new ProcessActions
-{
-    OnStarting = () => Console.WriteLine(">>>OnStarting<<<")
-};
 var startInfo = new ProcessStartInfo { FileName = "dotnet", Arguments = $"{AppContext.BaseDirectory}ProcRoll.Tests.Echo.dll \"This is the message\" --repeat", UseShellExecute = true };
 
-var p2 = await Process.Start(startInfo, actions);
+var process = await Process.Start(startInfo);
 
-Task.WaitAll(new[] { p1.Executing, p2.Executing });
+await Console.Out.WriteLineAsync("Press enter to stop...");
+await Console.In.ReadLineAsync();
+
+await process.Stop();

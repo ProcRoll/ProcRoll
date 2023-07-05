@@ -4,6 +4,8 @@
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-_4.Actions-bb3dbf35-c246-46fb-a176-62bbba3419ed</UserSecretsId>
+    <RootNamespace>_4.Actions</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,8 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ProcRoll.Process\ProcRoll.Process.csproj" />
+    <ProjectReference Include="..\..\src\ProcRoll.Host\ProcRoll.Host.csproj" />
     <ProjectReference Include="..\..\src\ProcRoll\ProcRoll.csproj" />
-    <ProjectReference Include="..\..\tests\ProcRoll.Tests.Echo\ProcRoll.Tests.Echo.csproj" />
   </ItemGroup>
 </Project>

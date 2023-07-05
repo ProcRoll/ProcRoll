@@ -16,8 +16,4 @@ public class HostedStartInfo : ProcessStartInfo
     /// A list of names of ProcRoll configurations that are required to be started before this process.
     /// </summary>
     public List<string> DependsOn { get; set; } = new();
-    /// <summary>
-    /// 
-    /// </summary>
-    public string? Handler { get; set; }
 }

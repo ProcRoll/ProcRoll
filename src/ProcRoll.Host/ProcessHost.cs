@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Options;
-using System.Diagnostics;
 using System.IO.Pipes;
 
 namespace ProcRoll;
@@ -24,28 +23,24 @@ public class ProcessHost : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (processStartInfo.StopMethod == StopMethod.Default)
-            processStartInfo.StopMethod = StopMethod.CtrlC;
+        var controlPipeName = string.Concat(Process.PIPE_PREFIX, hostConfig.ID);
+        using var controlPipe = new NamedPipeClientStream(".", controlPipeName, PipeDirection.In);
+        await controlPipe.ConnectAsync(stoppingToken);
 
-        process = new Process(processStartInfo);
+        process = new Process(processStartInfo) { IsShelled = true };
         await process.Start();
-        //process.OnStopped = hostApplicationLifetime.StopApplication();
-
         stoppingToken.Register(() => process.Stop().Wait());
 
-        var controlHandle = hostConfig.ID ?? throw new ArgumentException("'Control' missing from arguments.");
-        using var controlPipe = new AnonymousPipeClientStream(controlHandle);
         using var sr = new StreamReader(controlPipe);
         string? command;
         while ((command = await sr.ReadLineAsync(stoppingToken)) != null)
         {
             switch (command)
             {
-                case "Stop":
+                case ProcRoll.Process.CONTROL_STOP:
                     hostApplicationLifetime.StopApplication();
                     break;
                 default:
-                    await Console.Out.WriteLineAsync(command);
                     break;
             }
         }
