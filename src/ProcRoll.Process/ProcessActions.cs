@@ -6,17 +6,10 @@ public class ProcessActions
     /// Action to receive the console standard output messages of the external process.
     /// </summary>
     public Action<string>? StdOut { get; set; }
-
     /// <summary>
     /// Action to receive the console standard error messages of the external process.
     /// </summary>
     public Action<string>? StdErr { get; set; }
-
-    /// <summary>
-    /// A <see cref="System.Text.RegularExpressions.Regex"/> query to identify standard output message that indicates the external process has fully started.
-    /// </summary>
-    public string? StartedStringMatch { get; set; }
-
     /// <summary>
     /// Action executed before starting.
     /// </summary>

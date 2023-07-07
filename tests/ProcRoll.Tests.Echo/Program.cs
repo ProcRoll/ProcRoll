@@ -1,6 +1,5 @@
 ﻿var message = args[0];
 var repeat = args[1..].Contains("--repeat");
-var usebreak = args[1..].Contains("--usebreak");
 var fileArg = Array.IndexOf(args, "--file");
 
 if (fileArg > 0)
@@ -14,10 +13,7 @@ else if (repeat)
     Console.CancelKeyPress += (sender, e) =>
     {
         e.Cancel = true;
-        if (!usebreak || e.SpecialKey == ConsoleSpecialKey.ControlBreak)
-        {
-            stoppingTokenSource.Cancel();
-        }
+        stoppingTokenSource.Cancel();
     };
 
     while (!stoppingToken.IsCancellationRequested)

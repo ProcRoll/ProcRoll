@@ -12,13 +12,17 @@ namespace ProcRoll
         /// Enable ProcRoll. Configuration is read from "ProcRoll" section.
         /// </summary>
         /// <param name="host">IHostBuilder</param>
-        /// <param name="configureProcRoll">Delegate for configuring ProcRoll settings.</param>
+        /// <param name="configure">Delegate for configuring ProcRoll settings.</param>
         /// <returns>IHostBuilder</returns>
-        public static IHostBuilder ConfigureProcRoll(this IHostBuilder host, Action<ProcRollBuilder> configureProcRoll)
+        public static IHostBuilder ConfigureProcRoll(this IHostBuilder host, Action<ProcRollBuilder> configure)
         {
-            var builder = new ProcRollBuilder(host);
-            configureProcRoll(builder);
+            var actions = new Dictionary<string, Func<IServiceProvider, ProcessActions>>();
+            host.ConfigureServices(services => services.AddSingleton(actions));
+
+            var builder = new ProcRollBuilder(host, actions);
+            configure(builder);
             ConfigureProcRoll(host);
+
             return host;
         }
 

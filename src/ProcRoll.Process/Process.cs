@@ -1,4 +1,5 @@
 ﻿using System.IO.Pipes;
+using System.Runtime;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -18,8 +19,12 @@ public partial class Process : IDisposable, IAsyncDisposable
     private Regex? startedRegex;
     private bool disposedValue;
     private NamedPipeServerStream controlPipe;
+    private NamedPipeServerStream stdOutPipe;
+    private NamedPipeServerStream stdErrPipe;
+    private NamedPipeServerStream eventsPipe;
     private readonly TaskCompletionSource starting = new();
     private readonly TaskCompletionSource executing = new();
+    private readonly CancellationTokenSource stoppingTokenSource = new();
 
     /// <summary>
     /// Start an external process.
@@ -196,6 +201,52 @@ public partial class Process : IDisposable, IAsyncDisposable
     {
         var detachedId = Random.Shared.Next().ToString("x8");
         controlPipe = new NamedPipeServerStream(string.Concat(PIPE_PREFIX, detachedId), PipeDirection.Out);
+        stdOutPipe = new NamedPipeServerStream(string.Concat(PIPE_PREFIX, detachedId, PIPE_STDOUT), PipeDirection.In);
+        stdErrPipe = new NamedPipeServerStream(string.Concat(PIPE_PREFIX, detachedId, PIPE_STDERR), PipeDirection.In);
+        eventsPipe = new NamedPipeServerStream(string.Concat(PIPE_PREFIX, detachedId, PIPE_EVENTS), PipeDirection.In);
+
+        _ = Task.Run(async () =>
+        {
+            await stdOutPipe.WaitForConnectionAsync().ConfigureAwait(false);
+            var stoppingToken = stoppingTokenSource.Token;
+            using var sr = new StreamReader(stdOutPipe);
+            string? msg;
+            while ((msg = await sr.ReadLineAsync(stoppingToken).ConfigureAwait(false)) != null)
+            {
+                HandleConsoleOutput(msg, "Out");
+            }
+        }).ConfigureAwait(false);
+
+        _ = Task.Run(async () =>
+        {
+            await stdErrPipe.WaitForConnectionAsync().ConfigureAwait(false);
+            var stoppingToken = stoppingTokenSource.Token;
+            using var sr = new StreamReader(stdErrPipe);
+            string? msg;
+            while ((msg = await sr.ReadLineAsync(stoppingToken).ConfigureAwait(false)) != null)
+            {
+                HandleConsoleOutput(msg, "Out");
+            }
+        }).ConfigureAwait(false);
+
+        _ = Task.Run(async () =>
+        {
+            await eventsPipe.WaitForConnectionAsync().ConfigureAwait(false);
+            var stoppingToken = stoppingTokenSource.Token;
+            using var sr = new StreamReader(eventsPipe);
+            string? msg;
+            while ((msg = await sr.ReadLineAsync(stoppingToken).ConfigureAwait(false)) != null)
+            {
+                switch (msg)
+                {
+                    case EVENT_STARTED:
+                        starting.SetResult();
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }).ConfigureAwait(false);
 
         var processStartInfo = new System.Diagnostics.ProcessStartInfo();
         processStartInfo.UseShellExecute = true;
@@ -219,6 +270,9 @@ public partial class Process : IDisposable, IAsyncDisposable
 
         process = new System.Diagnostics.Process { StartInfo = processStartInfo };
         process.Start();
+
+        if (startedRegex == null)
+            starting.SetResult();
 
         await controlPipe.WaitForConnectionAsync().ConfigureAwait(false);
     }
@@ -266,6 +320,8 @@ public partial class Process : IDisposable, IAsyncDisposable
         await Task.WhenAny(Executing, Task.Delay(5000));
         process.Kill();
 
+        stoppingTokenSource.Cancel();
+
         await Task.Run(() => ProcessActions.OnStopped?.Invoke()).ConfigureAwait(false);
     }
 
@@ -284,11 +340,9 @@ public partial class Process : IDisposable, IAsyncDisposable
     void SendCtrlKey(uint key)
     {
         if (process is null) throw new InvalidOperationException("Process not started");
-        if (!SetConsoleCtrlHandler(null, true)) throw new InvalidOperationException(FormatPInvokeMessage("SetConsoleCtrlHandler(null, true)"));
-        if (!GenerateConsoleCtrlEvent(key, 0)) throw new InvalidOperationException(FormatPInvokeMessage("GenerateConsoleCtrlEvent(key, 0)"));
-        if (!SetConsoleCtrlHandler(null, false)) throw new InvalidOperationException(FormatPInvokeMessage("SetConsoleCtrlHandler(null, false)"));
-
-        static string FormatPInvokeMessage(string message) => $"{message} error ({Marshal.GetLastPInvokeError()}) {Marshal.GetLastPInvokeErrorMessage()}";
+        SetConsoleCtrlHandler(null, true);
+        GenerateConsoleCtrlEvent(key, 0);
+        SetConsoleCtrlHandler(null, false);
     }
 
     [GeneratedRegex("\\{\\w+\\}")]
@@ -318,7 +372,14 @@ public partial class Process : IDisposable, IAsyncDisposable
                 {
                     await Stop();
                 }
-                await controlPipe.DisposeAsync().ConfigureAwait(false);
+                if (controlPipe != null)
+                    await controlPipe.DisposeAsync().ConfigureAwait(false);
+                if (stdOutPipe != null)
+                    await stdOutPipe.DisposeAsync().ConfigureAwait(false);
+                if (stdErrPipe != null)
+                    await stdErrPipe.DisposeAsync().ConfigureAwait(false);
+                if (eventsPipe != null)
+                    await eventsPipe.DisposeAsync().ConfigureAwait(false);
             }
 
             if (process != null && !process.HasExited)
@@ -358,5 +419,9 @@ public partial class Process : IDisposable, IAsyncDisposable
     }
 
     internal const string PIPE_PREFIX = "ProcRoll:";
+    internal const string PIPE_STDOUT = ":StdOut";
+    internal const string PIPE_STDERR = ":StdErr";
+    internal const string PIPE_EVENTS = ":Events";
     internal const string CONTROL_STOP = "STOP";
+    internal const string EVENT_STARTED = "STARTED";
 }

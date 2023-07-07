@@ -26,7 +26,7 @@ namespace ProcRoll
         /// Triggered when the application host is ready to start the service.
         /// </summary>
         /// <param name="stoppingToken">Indicates that the start process has been aborted.</param>
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             logger.LogDebug("Starting hosted ProcRoll processes");
 
@@ -34,9 +34,13 @@ namespace ProcRoll
                 .Where(p => p.Value.StartMode == StartMode.Hosted)
                 .Select(p => ProcRollFactory.Start(p.Key).Result).ToList();
 
-            stoppingToken.Register(() => Task.WaitAll(hostedProcesses.Select(p => ProcRollFactory.Stop(p)).ToArray()));
+            try
+            {
+                await Task.Delay(Timeout.Infinite, stoppingToken);
+            }
+            catch (TaskCanceledException) { }
 
-            return Task.CompletedTask;
+            await Task.WhenAll(hostedProcesses.AsParallel().Select(ProcRollFactory.Stop).ToArray());
         }
     }
 }

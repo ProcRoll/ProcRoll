@@ -24,10 +24,10 @@ public class ProcessStartInfo
 
     public bool UseShellExecute { get; set; } = false;
 
-    public StopMethod StopMethod { get; set; } = StopMethod.Default;
-
     /// <summary>
     /// A <see cref="System.Text.RegularExpressions.Regex"/> query to identify standard output message that indicates the external process has fully started.
     /// </summary>
     public string? StartedStringMatch { get; set; }
+
+    public StopMethod StopMethod { get; set; } = StopMethod.Default;
 }

@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.VisualBasic;
+using System;
 
 namespace ProcRoll
 {
@@ -36,6 +38,7 @@ namespace ProcRoll
         private readonly ILoggerFactory loggerFactory;
         private readonly IServiceProvider serviceProvider;
         private readonly IOptions<ProcRollConfiguration> config;
+        private readonly Dictionary<string, Func<IServiceProvider, ProcessActions>> actions;
         private readonly Dictionary<string, LinkedList<Process>> startedProcesses = new();
         private readonly List<(Process Parent, Process Child)> processesDependencies = new();
 
@@ -45,11 +48,13 @@ namespace ProcRoll
         /// <param name="loggerFactory"></param>
         /// <param name="serviceProvider"></param>
         /// <param name="config"></param>
-        public ProcRollFactory(ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IOptions<ProcRollConfiguration> config)
+        /// <param name="actions"></param>
+        public ProcRollFactory(ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IOptions<ProcRollConfiguration> config, Dictionary<string, Func<IServiceProvider, ProcessActions>> actions)
         {
             this.loggerFactory = loggerFactory;
             this.serviceProvider = serviceProvider;
             this.config = config;
+            this.actions = actions;
         }
 
         /// <summary>
@@ -76,15 +81,14 @@ namespace ProcRoll
                     return running;
                 }
             }
-
+            var processActions = actions.ContainsKey(name) ? actions[name](serviceProvider) : new ProcessActions();
             var logger = loggerFactory.CreateLogger($"ProcRoll.{name}");
-            var actions = new ProcessActions
-            {
-                StdOut = message => logger.LogInformation("{message}", message),
-                StdErr = message => logger.LogWarning("{message}", message)
-            };
+            if (processActions.StdOut == null)
+                processActions.StdOut = (msg) => logger.LogInformation("{msg}", msg);
+            if (processActions.StdErr == null)
+                processActions.StdErr = (msg) => logger.LogWarning("{msg}", msg);
 
-            var process = new Process(startInfo);
+            var process = new Process(startInfo, processActions);
 
             processes.AddLast(process);
 
