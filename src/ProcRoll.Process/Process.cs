@@ -24,7 +24,6 @@ public partial class Process : IDisposable, IAsyncDisposable
     private NamedPipeServerStream eventsPipe;
     private readonly TaskCompletionSource starting = new();
     private readonly TaskCompletionSource executing = new();
-    private readonly CancellationTokenSource stoppingTokenSource = new();
 
     /// <summary>
     /// Start an external process.
@@ -208,34 +207,31 @@ public partial class Process : IDisposable, IAsyncDisposable
         _ = Task.Run(async () =>
         {
             await stdOutPipe.WaitForConnectionAsync().ConfigureAwait(false);
-            var stoppingToken = stoppingTokenSource.Token;
             using var sr = new StreamReader(stdOutPipe);
             string? msg;
-            while ((msg = await sr.ReadLineAsync(stoppingToken).ConfigureAwait(false)) != null)
+            while ((msg = await sr.ReadLineAsync().ConfigureAwait(false)) != null)
             {
                 HandleConsoleOutput(msg, "Out");
             }
         }).ConfigureAwait(false);
-
+        
         _ = Task.Run(async () =>
         {
             await stdErrPipe.WaitForConnectionAsync().ConfigureAwait(false);
-            var stoppingToken = stoppingTokenSource.Token;
             using var sr = new StreamReader(stdErrPipe);
             string? msg;
-            while ((msg = await sr.ReadLineAsync(stoppingToken).ConfigureAwait(false)) != null)
+            while ((msg = await sr.ReadLineAsync().ConfigureAwait(false)) != null)
             {
-                HandleConsoleOutput(msg, "Out");
+                HandleConsoleOutput(msg, "Err");
             }
         }).ConfigureAwait(false);
 
         _ = Task.Run(async () =>
         {
             await eventsPipe.WaitForConnectionAsync().ConfigureAwait(false);
-            var stoppingToken = stoppingTokenSource.Token;
             using var sr = new StreamReader(eventsPipe);
             string? msg;
-            while ((msg = await sr.ReadLineAsync(stoppingToken).ConfigureAwait(false)) != null)
+            while ((msg = await sr.ReadLineAsync().ConfigureAwait(false)) != null)
             {
                 switch (msg)
                 {
@@ -319,8 +315,6 @@ public partial class Process : IDisposable, IAsyncDisposable
         }
         await Task.WhenAny(Executing, Task.Delay(5000));
         process.Kill();
-
-        stoppingTokenSource.Cancel();
 
         await Task.Run(() => ProcessActions.OnStopped?.Invoke()).ConfigureAwait(false);
     }

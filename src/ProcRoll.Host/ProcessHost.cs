@@ -44,8 +44,8 @@ public class ProcessHost : BackgroundService
 
         var actions = new ProcessActions
         {
-            StdOut = async (msg) => await swOut.WriteLineAsync(msg),
-            StdErr = async (msg) => await swErr.WriteLineAsync(msg),
+            StdOut = swOut.WriteLine,
+            StdErr = swErr.WriteLine
         };
 
         process = new Process(processStartInfo, actions) { IsShelled = true };
