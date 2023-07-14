@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using System.Xml.Linq;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace ProcRoll
@@ -32,7 +33,7 @@ namespace ProcRoll
 
             var hostedProcesses = ProcRollFactory.Config.Processes
                 .Where(p => p.Value.StartMode == StartMode.Hosted)
-                .Select(p => ProcRollFactory.Start(p.Key).Result).ToList();
+                .ToDictionary(p => p.Key, p => ProcRollFactory.Start(p.Key).Result);
 
             try
             {
@@ -40,7 +41,11 @@ namespace ProcRoll
             }
             catch (TaskCanceledException) { }
 
-            await Task.WhenAll(hostedProcesses.AsParallel().Select(ProcRollFactory.Stop).ToArray());
+            logger.LogDebug("Stopping hosted ProcRoll processes");
+
+            await Task.WhenAll(hostedProcesses.AsParallel().Select(p => ProcRollFactory.Stop(p.Key, p.Value)).ToArray());
+
+            logger.LogDebug("Stopped hosted ProcRoll processes");
         }
     }
 }

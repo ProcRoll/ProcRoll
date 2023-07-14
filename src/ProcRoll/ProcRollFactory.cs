@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualBasic;
 using System;
+using System.Xml.Linq;
 
 namespace ProcRoll
 {
@@ -25,9 +26,10 @@ namespace ProcRoll
         /// <summary>
         /// Stop a process instance.
         /// </summary>
+        /// <param name="name"></param>
         /// <param name="process"></param>
         /// <returns></returns>
-        Task Stop(Process process);
+        Task Stop(string name, Process process);
     }
 
     /// <summary>
@@ -35,22 +37,25 @@ namespace ProcRoll
     /// </summary>
     public partial class ProcRollFactory : IProcRollFactory
     {
+        private readonly ILogger<ProcRollFactory> logger;
         private readonly ILoggerFactory loggerFactory;
         private readonly IServiceProvider serviceProvider;
         private readonly IOptions<ProcRollConfiguration> config;
         private readonly Dictionary<string, Func<IServiceProvider, ProcessActions>> actions;
         private readonly Dictionary<string, LinkedList<Process>> startedProcesses = new();
-        private readonly List<(Process Parent, Process Child)> processesDependencies = new();
+        private readonly List<(Process Parent, string Dependency, Process Child)> processesDependencies = new();
 
         /// <summary>
         /// Creates an instance <see cref="ProcRoll.ProcRollFactory"/> with injected dependencies.
         /// </summary>
+        /// <param name="logger"></param>
         /// <param name="loggerFactory"></param>
         /// <param name="serviceProvider"></param>
         /// <param name="config"></param>
         /// <param name="actions"></param>
-        public ProcRollFactory(ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IOptions<ProcRollConfiguration> config, Dictionary<string, Func<IServiceProvider, ProcessActions>> actions)
+        public ProcRollFactory(ILogger<ProcRollFactory> logger, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IOptions<ProcRollConfiguration> config, Dictionary<string, Func<IServiceProvider, ProcessActions>> actions)
         {
+            this.logger = logger;
             this.loggerFactory = loggerFactory;
             this.serviceProvider = serviceProvider;
             this.config = config;
@@ -78,15 +83,19 @@ namespace ProcRoll
                 var running = processes.FirstOrDefault(p => !p.Stopped);
                 if (running != null)
                 {
+                    logger.LogDebug("Running instance of ProcRoll '{name}' found", name);
                     return running;
                 }
             }
+
+            logger.LogDebug("Starting ProcRoll '{name}'", name);
+
             var processActions = actions.ContainsKey(name) ? actions[name](serviceProvider) : new ProcessActions();
-            var logger = loggerFactory.CreateLogger($"ProcRoll.{name}");
+            var procLogger = loggerFactory.CreateLogger($"ProcRoll.{name}");
             if (processActions.StdOut == null)
-                processActions.StdOut = (msg) => logger.LogInformation("{msg}", msg);
+                processActions.StdOut = (msg) => procLogger.LogInformation("{msg}", msg);
             if (processActions.StdErr == null)
-                processActions.StdErr = (msg) => logger.LogWarning("{msg}", msg);
+                processActions.StdErr = (msg) => procLogger.LogWarning("{msg}", msg);
 
             var process = new Process(startInfo, processActions);
 
@@ -94,6 +103,8 @@ namespace ProcRoll
 
             foreach (var dependency in startInfo.DependsOn)
             {
+                logger.LogDebug("Resolving dependency '{dependency}' for ProcRoll '{name}'", dependency, name);
+
                 var depProcesses = startedProcesses.TryGetValue(dependency, out var depProcessesValue) ? depProcessesValue : new();
 
                 if (Config.Processes[dependency].StartMode == StartMode.Default)
@@ -105,32 +116,45 @@ namespace ProcRoll
                     var lastDep = depProcesses.Where(p => !p.Stopped).LastOrDefault();
                     if (lastDep != null)
                     {
-                        processesDependencies.Add((process, lastDep));
+                        processesDependencies.Add((process, dependency, lastDep));
                         if (!lastDep.Started)
                             await lastDep.Starting;
                     }
                     else
                     {
                         var newDep = await Start(dependency);
-                        processesDependencies.Add((process, newDep));
+                        processesDependencies.Add((process, dependency, newDep));
                         await newDep.Starting;
                     }
                 }
             }
 
             await process.Start(args);
+
+            logger.LogDebug("Started ProcRoll '{name}'", name);
+
             return process;
         }
 
         /// <summary>
         /// Stop a process instance.
         /// </summary>
+        /// <param name="name"></param>
         /// <param name="process">The process to stop.</param>
-        public async Task Stop(Process process)
+        public async Task Stop(string name, Process process)
         {
             if (process.Stopped) return;
-            await Task.WhenAll(processesDependencies.Where(d => d.Parent == process).Select(d => Stop(d.Child)));
+
+            logger.LogDebug("Stopping ProcRoll '{name}'", name);
+
+            await Task.WhenAll(processesDependencies.Where(d => d.Parent == process).Select(d =>
+            {
+                logger.LogDebug("Stopping dependency ProcRoll '{dependency}'", d.Dependency);
+                return Stop(d.Dependency, d.Child);
+            }));
             await process.Stop();
+
+            logger.LogDebug("Stopped ProcRoll '{name}'", name);
         }
     }
 }

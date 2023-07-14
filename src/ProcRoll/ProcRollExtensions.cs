@@ -21,9 +21,7 @@ namespace ProcRoll
 
             var builder = new ProcRollBuilder(host, actions);
             configure(builder);
-            ConfigureProcRoll(host);
-
-            return host;
+            return ConfigureServices(host, actions);
         }
 
         /// <summary>
@@ -31,15 +29,15 @@ namespace ProcRoll
         /// </summary>
         /// <param name="host">IHostBuilder</param>
         /// <returns>IHostBuilder</returns>
-        public static IHostBuilder ConfigureProcRoll(this IHostBuilder host)
-        {
+        public static IHostBuilder ConfigureProcRoll(this IHostBuilder host) => ConfigureServices(host, new Dictionary<string, Func<IServiceProvider, ProcessActions>>());
+
+        private static IHostBuilder ConfigureServices(IHostBuilder host, Dictionary<string, Func<IServiceProvider, ProcessActions>> actions) => 
             host.ConfigureServices((hostContext, services) =>
             {
                 services.AddOptions<ProcRollConfiguration>().BindConfiguration("ProcRoll");
                 services.AddSingleton<IProcRollFactory, ProcRollFactory>();
                 services.AddHostedService<ProcRollHostedService>();
+                services.AddSingleton(actions);
             });
-            return host;
-        }
     }
 }
