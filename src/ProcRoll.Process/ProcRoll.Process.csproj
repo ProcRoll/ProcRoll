@@ -9,27 +9,4 @@
     <RootNamespace>ProcRoll</RootNamespace>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Include="..\..\content\LICENSE">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-    <None Include="..\..\content\README.nuget.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
-
-  <PropertyGroup>
-    <PackageId>ProcRoll.Process</PackageId>
-    <Version>1.0.3</Version>
-    <Authors>Brett Lyons</Authors>
-    <PackageTags>process;background;service;worker;hosting</PackageTags>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageReadmeFile>README.nuget.md</PackageReadmeFile>
-    <RepositoryUrl>https://github.com/ProcRoll/ProcRoll</RepositoryUrl>
-    <Description>A simple way to control external processes from your .NET app.</Description>
-    <RootNamespace>ProcRoll</RootNamespace>
-  </PropertyGroup>
-
 </Project>
