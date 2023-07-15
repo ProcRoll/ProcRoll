@@ -18,7 +18,10 @@ else if (repeat)
 
     while (!stoppingToken.IsCancellationRequested)
     {
-        Console.WriteLine(message);
+        for (int i = 0; i < 5; i++)
+        {
+            Console.WriteLine(message);
+        }
         try
         {
             await Task.Delay(1000, stoppingToken);

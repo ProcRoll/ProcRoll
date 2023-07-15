@@ -22,6 +22,9 @@ public class ProcessStartInfo
     /// </summary>
     public Dictionary<string, string> EnvironmentVariables { get; set; } = new();
 
+    /// <summary>
+    /// 
+    /// </summary>
     public bool UseShellExecute { get; set; } = false;
 
     /// <summary>
@@ -29,5 +32,8 @@ public class ProcessStartInfo
     /// </summary>
     public string? StartedStringMatch { get; set; }
 
+    /// <summary>
+    /// 
+    /// </summary>
     public StopMethod StopMethod { get; set; } = StopMethod.Default;
 }

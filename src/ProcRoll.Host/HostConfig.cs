@@ -7,8 +7,14 @@ using System.Threading.Tasks;
 
 namespace ProcRoll;
 
+/// <summary>
+/// 
+/// </summary>
 public class HostConfig
 {
+    /// <summary>
+    /// 
+    /// </summary>
     [Required, MinLength(8), MaxLength(8)]
     public required string ID { get; set; }
 }

@@ -4,26 +4,37 @@ using System.IO.Pipes;
 
 namespace ProcRoll;
 
+/// <summary>
+/// 
+/// </summary>
 public class ProcessHost : BackgroundService
 {
     private readonly ILogger<ProcessHost> logger;
-    private readonly IOptions<HostConfig> hostConfigOptions;
-    private readonly IOptions<ProcessStartInfo> processStartInfoOptions;
     private readonly IHostApplicationLifetime hostApplicationLifetime;
     private readonly HostConfig hostConfig;
     private readonly ProcessStartInfo processStartInfo;
     private Process? process;
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="logger"></param>
+    /// <param name="hostConfigOptions"></param>
+    /// <param name="processStartInfoOptions"></param>
+    /// <param name="hostApplicationLifetime"></param>
     public ProcessHost(ILogger<ProcessHost> logger, IOptions<HostConfig> hostConfigOptions, IOptions<ProcessStartInfo> processStartInfoOptions, IHostApplicationLifetime hostApplicationLifetime)
     {
         this.logger = logger;
-        this.hostConfigOptions = hostConfigOptions;
-        this.processStartInfoOptions = processStartInfoOptions;
         this.hostApplicationLifetime = hostApplicationLifetime;
         hostConfig = hostConfigOptions.Value;
         processStartInfo = processStartInfoOptions.Value;
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="stoppingToken"></param>
+    /// <returns></returns>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation("Starting process: {filename} {arguments}", processStartInfo.FileName, processStartInfo.Arguments);

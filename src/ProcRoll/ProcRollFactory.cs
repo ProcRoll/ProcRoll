@@ -1,9 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.VisualBasic;
-using System;
-using System.Xml.Linq;
 
 namespace ProcRoll
 {
@@ -83,19 +79,17 @@ namespace ProcRoll
                 var running = processes.FirstOrDefault(p => !p.Stopped);
                 if (running != null)
                 {
-                    logger.LogDebug("Running instance of ProcRoll '{name}' found", name);
+                    logger.LogDebug("Not starting '{name}' because it's already started.", name);
                     return running;
                 }
             }
 
-            logger.LogDebug("Starting ProcRoll '{name}'", name);
+            logger.LogDebug("Starting '{name}'", name);
 
             var processActions = actions.ContainsKey(name) ? actions[name](serviceProvider) : new ProcessActions();
             var procLogger = loggerFactory.CreateLogger($"ProcRoll.{name}");
-            if (processActions.StdOut == null)
-                processActions.StdOut = (msg) => procLogger.LogInformation("{msg}", msg);
-            if (processActions.StdErr == null)
-                processActions.StdErr = (msg) => procLogger.LogWarning("{msg}", msg);
+            processActions.StdOut ??= (msg) => procLogger.LogInformation("{msg}", msg);
+            processActions.StdErr ??= (msg) => procLogger.LogWarning("{msg}", msg);
 
             var process = new Process(startInfo, processActions);
 
@@ -103,7 +97,7 @@ namespace ProcRoll
 
             foreach (var dependency in startInfo.DependsOn)
             {
-                logger.LogDebug("Resolving dependency '{dependency}' for ProcRoll '{name}'", dependency, name);
+                logger.LogDebug("Starting dependency '{dependency}' for '{name}'", dependency, name);
 
                 var depProcesses = startedProcesses.TryGetValue(dependency, out var depProcessesValue) ? depProcessesValue : new();
 
@@ -131,7 +125,7 @@ namespace ProcRoll
 
             await process.Start(args);
 
-            logger.LogDebug("Started ProcRoll '{name}'", name);
+            logger.LogDebug("Started '{name}'", name);
 
             return process;
         }
@@ -145,16 +139,16 @@ namespace ProcRoll
         {
             if (process.Stopped) return;
 
-            logger.LogDebug("Stopping ProcRoll '{name}'", name);
+            logger.LogDebug("Stopping '{name}'", name);
 
             await Task.WhenAll(processesDependencies.Where(d => d.Parent == process).Select(d =>
             {
-                logger.LogDebug("Stopping dependency ProcRoll '{dependency}'", d.Dependency);
+                logger.LogDebug("Stopping dependency '{dependency}' for '{name}'", d.Dependency, name);
                 return Stop(d.Dependency, d.Child);
             }));
             await process.Stop();
 
-            logger.LogDebug("Stopped ProcRoll '{name}'", name);
+            logger.LogDebug("Stopped '{name}'", name);
         }
     }
 }

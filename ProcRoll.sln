@@ -12,6 +12,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "3.HostedWorkerConfigInCode", "demos\3.HostedWorkerConfigInCode\3.HostedWorkerConfigInCode.csproj", "{91333B4C-14EB-498A-ACDE-2DF570C10CF5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{F04259D1-B963-4443-8296-1098F1FE0C51}"
+	ProjectSection(SolutionItems) = preProject
+		src\Directory.Build.props = src\Directory.Build.props
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProcRoll", "src\ProcRoll\ProcRoll.csproj", "{A7CB96AB-E115-49ED-B081-21E8739D06EA}"
 EndProject
@@ -25,7 +28,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProcRoll.Tests.Echo", "test
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProcRoll.Host", "src\ProcRoll.Host\ProcRoll.Host.csproj", "{1065199E-8282-44AA-A3D3-634025E2D831}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "4.Actions", "demos\4.Actions\4.Actions.csproj", "{972D867A-DCB5-4CE4-ABDA-143F502C3978}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "4.Actions", "demos\4.Actions\4.Actions.csproj", "{972D867A-DCB5-4CE4-ABDA-143F502C3978}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -83,5 +86,8 @@ Global
 		{9421CA7E-6CD9-47B2-B504-B88179BE70B2} = {74BC300D-B93B-4FB1-B9B1-5A811E6DE5AA}
 		{1065199E-8282-44AA-A3D3-634025E2D831} = {F04259D1-B963-4443-8296-1098F1FE0C51}
 		{972D867A-DCB5-4CE4-ABDA-143F502C3978} = {A012B902-8817-4419-9332-F877C9793A39}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {63B89481-6E05-4EB7-8EA1-E763BBF689F7}
 	EndGlobalSection
 EndGlobal

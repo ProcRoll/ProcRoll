@@ -1,5 +1,8 @@
 ﻿namespace ProcRoll;
 
+/// <summary>
+/// 
+/// </summary>
 public class ProcessActions
 {
     /// <summary>
@@ -13,18 +16,18 @@ public class ProcessActions
     /// <summary>
     /// Action executed before starting.
     /// </summary>
-    public Action OnStarting { get; set; }
+    public Action? OnStarting { get; set; }
     /// <summary>
     /// Action executed after starting.
     /// </summary>
-    public Action OnStarted { get; set; }
+    public Action? OnStarted { get; set; }
     /// <summary>
     /// Action executed before stopping.
     /// </summary>
-    public Action OnStopping { get; set; }
+    public Action? OnStopping { get; set; }
     /// <summary>
     /// Action executed after stopping.
     /// </summary>
-    public Action OnStopped { get; set; }
+    public Action? OnStopped { get; set; }
 
 }

@@ -18,10 +18,10 @@ public partial class Process : IDisposable, IAsyncDisposable
     private System.Diagnostics.Process? process;
     private Regex? startedRegex;
     private bool disposedValue;
-    private NamedPipeServerStream controlPipe;
-    private NamedPipeServerStream stdOutPipe;
-    private NamedPipeServerStream stdErrPipe;
-    private NamedPipeServerStream eventsPipe;
+    private NamedPipeServerStream? controlPipe;
+    private NamedPipeServerStream? stdOutPipe;
+    private NamedPipeServerStream? stdErrPipe;
+    private NamedPipeServerStream? eventsPipe;
     private readonly TaskCompletionSource starting = new();
     private readonly TaskCompletionSource executing = new();
 
@@ -244,8 +244,7 @@ public partial class Process : IDisposable, IAsyncDisposable
             }
         }).ConfigureAwait(false);
 
-        var processStartInfo = new System.Diagnostics.ProcessStartInfo();
-        processStartInfo.UseShellExecute = true;
+        var processStartInfo = new System.Diagnostics.ProcessStartInfo { UseShellExecute = true };
 
         StringBuilder hostArgs = new();
         hostArgs.Append($"Host:ID={detachedId} ");
@@ -285,7 +284,7 @@ public partial class Process : IDisposable, IAsyncDisposable
 
         if (StartInfo.UseShellExecute)
         {
-            using var sw = new StreamWriter(controlPipe) { AutoFlush = true };
+            using var sw = new StreamWriter(controlPipe!) { AutoFlush = true };
             await sw.WriteLineAsync(CONTROL_STOP).ConfigureAwait(false);
             await process.WaitForExitAsync().ConfigureAwait(false);
         }

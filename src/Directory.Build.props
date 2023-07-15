@@ -1,6 +1,15 @@
 <Project>
   <PropertyGroup>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
     <RootNamespace>ProcRoll</RootNamespace>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!--<PackageLicenseExpression>MIT</PackageLicenseExpression>-->
+    
+    <!--<IncludeBuildOutput>true</IncludeBuildOutput>
+    <BuildOutputTargetFolder>lib</BuildOutputTargetFolder>
+    <IncludeContentInPack>false</IncludeContentInPack>-->
   </PropertyGroup>
 </Project>
