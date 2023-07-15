@@ -2,17 +2,25 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
   <metadata>
     <id>ProcRoll</id>
-    <version>1.0.4</version>
-    <authors>ProcRoll</authors>
-    <description>Package Description</description>
+    <version>$version$</version>
+    <authors>Brett Lyons</authors>
+    <description>A simple way to control external processes from your .NET app.</description>
+    <readme>ProcRoll.README.md</readme>
+    <license type="expression">MIT</license>
+    <tags>process background service worker hosting</tags>
+    <repository url="https://github.com/ProcRoll/ProcRoll" />
     <dependencies>
       <group targetFramework="net7.0">
         <dependency id="Microsoft.Extensions.Hosting" version="7.0.1" exclude="Build,Analyzers" />
       </group>
     </dependencies>
+    
   </metadata>
   <files>
-    <file src="bin\Debug\**\*.dll" target="lib" />
-    <file src="bin\Debug\**\*.xml" target="lib" />
+    <file src="bin\Release\**\*.dll" target="lib" />
+    <file src="bin\Release\**\*.exe" target="lib" />
+    <file src="bin\Release\**\*.xml" target="lib" />
+    <file src="bin\Release\**\*.pdb" target="lib" />
+    <file src="..\..\content\ProcRoll.README.md" target="" />
   </files>
 </package>

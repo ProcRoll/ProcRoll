@@ -6,10 +6,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <!--<PackageLicenseExpression>MIT</PackageLicenseExpression>-->
-    
-    <!--<IncludeBuildOutput>true</IncludeBuildOutput>
-    <BuildOutputTargetFolder>lib</BuildOutputTargetFolder>
-    <IncludeContentInPack>false</IncludeContentInPack>-->
+    <NuspecProperties>Version=$(Version)</NuspecProperties>
   </PropertyGroup>
 </Project>
