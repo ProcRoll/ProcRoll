@@ -12,8 +12,8 @@ IHost host = new HostBuilder()
         .AddConsole())
     .ConfigureServices(services =>
     {
-        services.AddOptions<HostConfig>().BindConfiguration("Host").ValidateDataAnnotations();
-        services.AddOptions<ProcessStartInfo>().BindConfiguration("Process").ValidateDataAnnotations();
+        services.AddOptions<HostConfig>().BindConfiguration("Host");
+        services.AddOptions<ProcessStartInfo>().BindConfiguration("Process");
         services.AddHostedService<ProcessHost>();
     })
     .Build();

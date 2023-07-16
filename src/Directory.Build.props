@@ -6,6 +6,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NuspecProperties>Version=$(Version)</NuspecProperties>
+    <NuspecProperties>Version=$(Version);Configuration=$(Configuration)</NuspecProperties>
   </PropertyGroup>
 </Project>

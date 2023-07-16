@@ -2,7 +2,8 @@
   "profiles": {
     "ProcRoll.Tests.Echo": {
       "commandName": "Project",
-      "commandLineArgs": "\"Success\" --repeat --usebreak"
+      "commandLineArgs": ""
+      //"commandLineArgs": "\"Success\" --repeat --usebreak"
     }
   }
 }

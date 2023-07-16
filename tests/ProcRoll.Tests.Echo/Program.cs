@@ -1,5 +1,10 @@
-﻿var message = args[0];
-var repeat = args[1..].Contains("--repeat");
+﻿using System.Diagnostics;
+
+if (args.Length == 0)
+    args = new[] { $"Testing PID {Environment.ProcessId}", "--repeat" };
+
+var message = args[0];
+var repeat = args.Contains("--repeat");
 var fileArg = Array.IndexOf(args, "--file");
 
 if (fileArg > 0)
@@ -18,10 +23,7 @@ else if (repeat)
 
     while (!stoppingToken.IsCancellationRequested)
     {
-        for (int i = 0; i < 5; i++)
-        {
-            Console.WriteLine(message);
-        }
+        Console.WriteLine(message);
         try
         {
             await Task.Delay(1000, stoppingToken);

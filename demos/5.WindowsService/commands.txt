@@ -1,0 +1,17 @@
+dotnet publish -o bin\Debug\publish --sc -r win-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true
+
+dotnet publish -o bin\Debug\publish --sc -p:PublishSingleFile=true -p:PublishTrimmed=true -p:DebugType=None -p:DebugSymbols=false -p:GenerateDocumentationFile=false
+
+dotnet publish -o bin\Debug\publish --sc -r win-x64 -p:PublishSingleFile=false
+
+dotnet pack C:\Users\ultim\source\repos\ProcRoll\ProcRoll\src\ProcRoll\ProcRoll.csproj -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -o C:\Users\ultim\source\packages -c Release
+
+dotnet pack C:\Users\ultim\source\repos\ProcRoll\ProcRoll\src\ProcRoll\ProcRoll.csproj -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -o C:\Users\ultim\source\packages -c Debug
+
+dotnet pack C:\Users\ultim\source\repos\ProcRoll\ProcRoll\src\ProcRoll\ProcRoll.csproj -o C:\Users\ultim\source\packages -c Debug
+
+dotnet publish -o bin\Debug\publish
+
+    <!--<Exec Command="dotnet publish ..\ProcRoll.Host\ProcRoll.Host.csproj -o $(OutputPath) -c $(Configuration) __sc -p:PublishSingleFile=true -p:PublishTrimmed=true -p:DebugType=None -p:DebugSymbols=false -p:GenerateDocumentationFile=false" />-->
+    <!--<MSBuild Projects="..\ProcRoll.Host\ProcRoll.Host.csproj" RebaseOutputs="true" 
+             Targets="Restore;Build;Publish" Properties="SelfContained=true;PublishSingleFile=true;PublishTrimmed=true;TargetFramework=net7.0;RuntimeIdentifier=win-x86" />-->

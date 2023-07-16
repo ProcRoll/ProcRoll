@@ -260,7 +260,7 @@ public partial class Process : IDisposable, IAsyncDisposable
         else
         {
             processStartInfo.FileName = "dotnet";
-            processStartInfo.Arguments = $"{AppContext.BaseDirectory}ProcRoll.Host.dll {hostArgs}";
+            processStartInfo.Arguments = $"{AppContext.BaseDirectory}ProcRoll.Host.exe {hostArgs}";
         }
 
         process = new System.Diagnostics.Process { StartInfo = processStartInfo };

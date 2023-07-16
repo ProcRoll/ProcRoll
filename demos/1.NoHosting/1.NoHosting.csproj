@@ -9,7 +9,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ProcRoll.Host\ProcRoll.Host.csproj" />
-    <ProjectReference Include="..\..\src\ProcRoll.Process\ProcRoll.Process.csproj" />
     <ProjectReference Include="..\..\tests\ProcRoll.Tests.Echo\ProcRoll.Tests.Echo.csproj" />
   </ItemGroup>
 
