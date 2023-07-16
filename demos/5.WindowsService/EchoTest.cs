@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using ProcRoll;
 
 internal class EchoTest : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var process = Process.Start($"{AppContext.BaseDirectory}Echo\\ProcRoll.Tests.Echo.exe");
+        using var process = Process.Start(new ProcessStartInfo 
+        {
+            FileName = $"{AppContext.BaseDirectory}ProcRoll.Tests.Echo.exe", 
+            UseShellExecute = true 
+        });
         await Task.Delay(Timeout.Infinite, stoppingToken);
     }
 }

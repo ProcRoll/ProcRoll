@@ -18,7 +18,6 @@
   <files>
     <file src="bin\$configuration$\**\*.dll" target="lib" />
     <file src="bin\$configuration$\**\*.exe" target="lib" />
-    <file src="bin\$configuration$\**\*.json" target="lib" />
     <file src="bin\$configuration$\**\*.xml" target="lib" />
     <file src="bin\$configuration$\**\*.pdb" target="lib" />
     <file src="..\..\content\README.md" target="docs" />

@@ -23,8 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Echo\ProcRoll.Tests.Echo.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <ProjectReference Include="..\..\tests\ProcRoll.Tests.Echo\ProcRoll.Tests.Echo.csproj" />
   </ItemGroup>
 </Project>

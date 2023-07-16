@@ -13,9 +13,9 @@
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <MSBuild Projects="..\ProcRoll.Host\ProcRoll.Host.csproj" RebaseOutputs="true" Targets="Restore;Publish" Properties="PublishDir=$(PublishDir);SelfContained=true;PublishSingleFile=true;PublishTrimmed=true" />
+    <MSBuild Projects="..\ProcRoll.Host\ProcRoll.Host.csproj" RebaseOutputs="true" Targets="Restore;Publish" Properties="PublishDir=$(PublishDir);SelfContained=true;PublishSingleFile=true;PublishTrimmed=true;PublishReadyToRun=true" />
     <ItemGroup>
-      <Content Include="..\ProcRoll.Host\$(PublishDir)ProcRoll.Host*">
+      <Content Include="..\ProcRoll.Host\$(PublishDir)ProcRoll.Host.exe">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
     </ItemGroup>

@@ -2,13 +2,19 @@ dotnet publish -o bin\Debug\publish --sc -r win-x64 -p:PublishSingleFile=true -p
 
 dotnet publish -o bin\Debug\publish --sc -p:PublishSingleFile=true -p:PublishTrimmed=true -p:DebugType=None -p:DebugSymbols=false -p:GenerateDocumentationFile=false
 
-dotnet publish -o bin\Debug\publish --sc -r win-x64 -p:PublishSingleFile=false
+dotnet publish -o bin\Debug\publish --sc -r win-x64 -p:PublishSingleFile=true
+
+dotnet publish C:\Users\ultim\source\repos\ProcRoll\ProcRoll\demos\5.WindowsService\5.WindowsService.csproj -o C:\Users\ultim\source\repos\ProcRoll\ProcRoll\demos\5.WindowsService\bin\Debug\publish -p:PublishSingleFile=true
 
 dotnet pack C:\Users\ultim\source\repos\ProcRoll\ProcRoll\src\ProcRoll\ProcRoll.csproj -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -o C:\Users\ultim\source\packages -c Release
 
 dotnet pack C:\Users\ultim\source\repos\ProcRoll\ProcRoll\src\ProcRoll\ProcRoll.csproj -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -o C:\Users\ultim\source\packages -c Debug
 
 dotnet pack C:\Users\ultim\source\repos\ProcRoll\ProcRoll\src\ProcRoll\ProcRoll.csproj -o C:\Users\ultim\source\packages -c Debug
+
+dotnet pack C:\Users\ultim\source\repos\ProcRoll\ProcRoll\demos\5.WindowsService\5.WindowsService.csproj -o C:\Users\ultim\source\packages -c Debug
+
+
 
 dotnet publish -o bin\Debug\publish
 
