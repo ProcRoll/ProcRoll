@@ -141,12 +141,13 @@ namespace ProcRoll
 
             logger.LogDebug("Stopping '{name}'", name);
 
+            await process.Stop();
+
             await Task.WhenAll(processesDependencies.Where(d => d.Parent == process).Select(d =>
             {
                 logger.LogDebug("Stopping dependency '{dependency}' for '{name}'", d.Dependency, name);
                 return Stop(d.Dependency, d.Child);
             }));
-            await process.Stop();
 
             logger.LogDebug("Stopped '{name}'", name);
         }
