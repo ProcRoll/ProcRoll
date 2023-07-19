@@ -4,7 +4,7 @@ internal class EchoTest : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var process = Process.Start(new ProcessStartInfo
+        using var process = Process.Run(new ProcessStartInfo
         {
             FileName = $"{AppContext.BaseDirectory}ProcRoll.Tests.Echo.exe",
             UseShellExecute = true
