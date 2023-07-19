@@ -1,45 +1,35 @@
-﻿using System.CommandLine;
+﻿if (args.Length == 0)
+    args = new[] { $"Testing PID {Environment.ProcessId}", "--repeat" };
 
-internal class Program
+var message = args[0];
+var repeat = args.Contains("--repeat");
+var fileArg = Array.IndexOf(args, "--file");
+
+if (fileArg > 0)
 {
-    static async Task<int> Main(string[] args)
+    File.WriteAllText(args[fileArg + 1], message);
+}
+else if (repeat)
+{
+    CancellationTokenSource stoppingTokenSource = new();
+    var stoppingToken = stoppingTokenSource.Token;
+    Console.CancelKeyPress += (sender, e) =>
     {
-        var messageArgument = new Argument<string>("message", "Message to write.");
-        var repeatOption = new Option<bool?>("--repeat", "Repeat until stopped.");
-        var fileOption = new Option<FileInfo?>("--file", "A file to write to instead of the console.");
-        var rootCommand = new RootCommand("Echo app for testing ProcRoll.");
-        rootCommand.AddArgument(messageArgument);
-        rootCommand.AddOption(repeatOption);
-        rootCommand.AddOption(fileOption);
+        e.Cancel = true;
+        stoppingTokenSource.Cancel();
+    };
 
-        rootCommand.SetHandler(async (context) =>
+    while (!stoppingToken.IsCancellationRequested)
+    {
+        Console.WriteLine(message);
+        try
         {
-            var message = context.ParseResult.GetValueForArgument(messageArgument);
-            var repeat = context.ParseResult.GetValueForOption(repeatOption);
-            var file = context.ParseResult.GetValueForOption(fileOption);
-
-            if (file != null)
-            {
-                await File.AppendAllTextAsync(file.FullName, message);
-            }
-            else
-            {
-                if (repeat is true)
-                {
-                    var cancellationToken = context.GetCancellationToken();
-                    while (!cancellationToken.IsCancellationRequested)
-                    {
-                        Console.WriteLine(message);
-                        await Task.Delay(1000, cancellationToken);
-                    }
-                }
-                else
-                {
-                    Console.WriteLine(message);
-                }
-            }
-        });
-
-        return await rootCommand.InvokeAsync(args);
+            await Task.Delay(1000, stoppingToken);
+        }
+        catch (TaskCanceledException) { }
     }
+}
+else
+{
+    Console.WriteLine(message);
 }

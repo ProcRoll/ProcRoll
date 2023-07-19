@@ -1,9 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+<Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-_4.Actions-bb3dbf35-c246-46fb-a176-62bbba3419ed</UserSecretsId>
+    <RootNamespace>_4.Actions</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

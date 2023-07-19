@@ -4,7 +4,6 @@
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>dotnet-HostedWorkerConfigInFile-378cd262-2955-49c9-aa94-ca24b5d7cb35</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,7 +11,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ProcRoll.Process\ProcRoll.Process.csproj" />
     <ProjectReference Include="..\..\src\ProcRoll\ProcRoll.csproj" />
     <ProjectReference Include="..\..\tests\ProcRoll.Tests.Echo\ProcRoll.Tests.Echo.csproj" />
   </ItemGroup>

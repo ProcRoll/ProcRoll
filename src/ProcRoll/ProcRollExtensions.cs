@@ -1,5 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace ProcRoll
 {
@@ -11,107 +11,33 @@ namespace ProcRoll
         /// <summary>
         /// Enable ProcRoll. Configuration is read from "ProcRoll" section.
         /// </summary>
-        /// <returns></returns>
-        public static IServiceCollection AddProcRoll(this IServiceCollection services) => AddProcRoll(services, null);
+        /// <param name="host">Instance of <see cref="IHostBuilder"/></param>
+        /// <param name="configure">Delegate for configuring ProcRoll settings.</param>
+        /// <returns>Instance of <see cref="IHostBuilder"/></returns>
+        public static IHostBuilder ConfigureProcRoll(this IHostBuilder host, Action<ProcRollBuilder> configure)
+        {
+            var actions = new Dictionary<string, Func<IServiceProvider, ProcessActions>>();
+            host.ConfigureServices(services => services.AddSingleton(actions));
+
+            var builder = new ProcRollBuilder(host, actions);
+            configure(builder);
+            return ConfigureServices(host, actions);
+        }
 
         /// <summary>
-        /// Enable ProcRoll. Update ProcRollConfiguration with process start configurations.
+        /// Enable ProcRoll. Configuration is read from "ProcRoll" section.
         /// </summary>
-        /// <param name="services"></param>
-        /// <param name="procRollConfiguration"></param>
-        /// <returns></returns>
-        public static IServiceCollection AddProcRoll(this IServiceCollection services, Action<ProcRollConfiguration>? procRollConfiguration)
-        {
-            services.AddOptions<ProcRollConfiguration>().BindConfiguration("ProcRoll");
-            services.AddSingleton<IProcRollFactory, ProcRollFactory>();
+        /// <param name="host">Instance of <see cref="IHostBuilder"/></param>
+        /// <returns>Instance of <see cref="IHostBuilder"/></returns>
+        public static IHostBuilder ConfigureProcRoll(this IHostBuilder host) => ConfigureServices(host, new Dictionary<string, Func<IServiceProvider, ProcessActions>>());
 
-            using var serviceProvider = services.BuildServiceProvider();
-            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-            var procRollConfigurationInstance = configuration.GetSection("ProcRoll")?.Get<ProcRollConfiguration>() ?? new ProcRollConfiguration();
-            services.AddSingleton(procRollConfigurationInstance);
-
-            procRollConfiguration?.Invoke(procRollConfigurationInstance);
-
-            if (procRollConfigurationInstance.Processes.Any(p => p.Value.StartMode == StartMode.Hosted))
+        private static IHostBuilder ConfigureServices(IHostBuilder host, Dictionary<string, Func<IServiceProvider, ProcessActions>> actions) =>
+            host.ConfigureServices((hostContext, services) =>
+            {
+                services.AddOptions<ProcRollConfiguration>().BindConfiguration("ProcRoll");
+                services.AddSingleton<IProcRollFactory, ProcRollFactory>();
                 services.AddHostedService<ProcRollHostedService>();
-
-            return services;
-        }
-
-        /// <summary>
-        /// Add a process configuration to the ProcRollConfiguration service.
-        /// </summary>
-        /// <param name="procRollConfiguration"></param>
-        /// <param name="name"></param>
-        /// <param name="fileName"></param>
-        /// <param name="arguments"></param>
-        /// <param name="startMode"></param>
-        /// <param name="stopMethod"></param>
-        /// <param name="environmentVariables"></param>
-        /// <param name="stdOut"></param>
-        /// <param name="stdErr"></param>
-        /// <param name="startedStringMatch"></param>
-        /// <param name="dependsOn"></param>
-        /// <param name="stopping"></param>
-        /// <returns></returns>
-        public static ProcRollConfiguration Add(this ProcRollConfiguration procRollConfiguration,
-                                                string name,
-                                                string fileName,
-                                                string? arguments = default,
-                                                StartMode startMode = StartMode.Default,
-                                                StopMethod stopMethod = StopMethod.Default,
-                                                IEnumerable<KeyValuePair<string, string>>? environmentVariables = default,
-                                                Action<string>? stdOut = default,
-                                                Action<string>? stdErr = default,
-                                                string? startedStringMatch = default,
-                                                IEnumerable<string>? dependsOn = default,
-                                                Action<Process>? stopping = default)
-        {
-            var startInfo = procRollConfiguration.Processes.TryGetValue(name, out var value) ? value : new();
-
-            if (string.IsNullOrEmpty(startInfo.FileName)) { startInfo.FileName = fileName; }
-            if (string.IsNullOrEmpty(startInfo.Arguments)) { startInfo.Arguments = arguments; }
-            startInfo.StartMode ??= startMode;
-            startInfo.StopMethod ??= stopMethod;
-            startInfo.StdOut = stdOut;
-            startInfo.StdErr = stdErr;
-            if (string.IsNullOrEmpty(startInfo.StartedStringMatch)) { startInfo.StartedStringMatch = startedStringMatch; }
-
-            if (environmentVariables != null)
-            {
-                foreach (var item in environmentVariables)
-                {
-                    startInfo.EnvironmentVariables.TryAdd(item.Key, item.Value);
-                }
-            }
-
-            if (dependsOn != null)
-                startInfo.DependsOn.AddRange(dependsOn);
-
-            ProcRollEventHandlers? eventHandlers;
-            if (stopping != null)
-            {
-                eventHandlers = new() { Stopping = stopping };
-                procRollConfiguration.EventHandlers[name] = eventHandlers;
-            }
-
-            procRollConfiguration.Processes[name] = startInfo;
-            return procRollConfiguration;
-        }
-
-        /// <summary>
-        /// Add event handlers for processes in the ProcRollConfiguration.
-        /// </summary>
-        /// <param name="procRollConfiguration"></param>
-        /// <param name="name"></param>
-        /// <param name="handlersConfig"></param>
-        /// <returns></returns>
-        public static ProcRollConfiguration WithEventHandlers(this ProcRollConfiguration procRollConfiguration, string name, Action<ProcRollEventHandlers> handlersConfig)
-        {
-            var handlers = procRollConfiguration.EventHandlers.TryGetValue(name, out var val) ? val : procRollConfiguration.EventHandlers[name] = new();
-            handlersConfig(handlers);
-
-            return procRollConfiguration;
-        }
+                services.AddSingleton(actions);
+            });
     }
 }

@@ -9,7 +9,7 @@ on:
 jobs:
   publish:
 
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     
@@ -21,10 +21,10 @@ jobs:
         dotnet-version: 7.0.x
         
     - name: Pack ProcRoll
-      run: dotnet pack ./src/ProcRoll/ProcRoll.csproj -c Release --verbosity normal
+      run: dotnet pack ./src/ProcRoll/ProcRoll.csproj -c Release -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg --verbosity normal
       
     - name: Pack ProcRoll.Process
-      run: dotnet pack ./src/ProcRoll.Process/ProcRoll.Process.csproj -c Release --no-build --verbosity normal
+      run: dotnet pack ./src/ProcRoll.Process/ProcRoll.Process.csproj -c Release -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg --no-build --verbosity normal
       
     - name: Push to Nuget
       run: dotnet nuget push "./src/**/*.nupkg" -s https://api.nuget.org/v3/index.json -k $API_KEY

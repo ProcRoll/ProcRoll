@@ -8,10 +8,6 @@
         /// <summary>
         /// The configured process start configurations.
         /// </summary>
-        public Dictionary<string, ProcessStartInfo> Processes { get; set; } = new Dictionary<string, ProcessStartInfo>();
-        /// <summary>
-        /// Handlers matching the configured start processes.
-        /// </summary>
-        public Dictionary<string, ProcRollEventHandlers> EventHandlers { get; set; } = new Dictionary<string, ProcRollEventHandlers>();
+        public Dictionary<string, HostedStartInfo> Processes { get; set; } = new Dictionary<string, HostedStartInfo>();
     }
 }

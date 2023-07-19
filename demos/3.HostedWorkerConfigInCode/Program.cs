@@ -3,12 +3,9 @@ using ProcRoll;
 Directory.SetCurrentDirectory(AppContext.BaseDirectory);
 
 IHost host = Host.CreateDefaultBuilder(args)
-    .ConfigureServices(services =>
+    .ConfigureProcRoll(configProcRoll =>
     {
-        services.AddProcRoll(config =>
-        {
-            config.Add("Echo", "dotnet", "ProcRoll.Tests.Echo.dll \"Success\" --repeat", StartMode.Hosted);
-        });
+        configProcRoll.Add("Echo", "ProcRoll.Tests.Echo.exe", "Success --repeat", StartMode.Hosted, StopMethod.CtrlC);
     })
     .Build();
 
