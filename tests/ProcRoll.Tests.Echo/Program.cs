@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-if (args.Length == 0)
+﻿if (args.Length == 0)
     args = new[] { $"Testing PID {Environment.ProcessId}", "--repeat" };
 
 var message = args[0];

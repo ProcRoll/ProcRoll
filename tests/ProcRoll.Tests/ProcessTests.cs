@@ -23,7 +23,7 @@ public class ProcessTests
         try
         {
             TestContext.WriteLine($"{Time} Writing to {outFile}");
-            var process = await Process.Start("dotnet", $"ProcRoll.Tests.Echo.dll \"Success\" --file \"{outFile}\"");
+            var process = await Process.Run("dotnet", $"ProcRoll.Tests.Echo.dll \"Success\" --file \"{outFile}\"");
             TestContext.WriteLine($"{Time} Waiting for write to finish");
             await process.Executing;
             TestContext.WriteLine($"{Time} Reading file and verifying contents");
@@ -41,13 +41,9 @@ public class ProcessTests
     {
         var outText = new StringBuilder();
         TestContext.WriteLine($"{Time} Starting process");
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = "dotnet",
-            Arguments = $"ProcRoll.Tests.Echo.dll \"Success\"",
-            //StdOut = m => outText.Append(m)
-        };
-        var process = await Process.Start(startInfo);
+        var startInfo = new ProcessStartInfo { FileName = "dotnet", Arguments = $"ProcRoll.Tests.Echo.dll \"Success\"" };
+        var actions = new ProcessActions { StdOut = m => outText.Append(m) };
+        var process = await Process.Run(startInfo, actions);
         TestContext.WriteLine($"{Time} Waiting for write to finish");
         await process.Executing;
         TestContext.WriteLine($"{Time} Reading output and verifying contents");
@@ -67,10 +63,10 @@ public class ProcessTests
             FileName = "dotnet",
             Arguments = $"ProcRoll.Tests.Echo.dll \"Success\" --repeat",
             StartedStringMatch = "Success",
-            //StopMethod = stopMethod,
-            //StdOut = TestContext.WriteLine
+            StopMethod = stopMethod
         };
-        var process = await Process.Start(startInfo);
+        var actions = new ProcessActions { StdOut = TestContext.WriteLine };
+        var process = await Process.Run(startInfo);
         await process.Starting;
         TestContext.WriteLine($"{Time} Stopping process");
         await process.Stop();

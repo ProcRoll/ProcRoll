@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace ProcRoll
@@ -15,8 +14,8 @@ namespace ProcRoll
         /// <summary>
         /// Constructor used by ConfiureProcRoll() extension method.
         /// </summary>
-        /// <param name="host"></param>
-        /// <param name="actions"></param>
+        /// <param name="host">Instance of <see cref="IHostBuilder"/></param>
+        /// <param name="actions">Instance of Dictionary{string, Func{IServiceProvider, ProcessActions}}</param>
         public ProcRollBuilder(IHostBuilder host, Dictionary<string, Func<IServiceProvider, ProcessActions>> actions)
         {
             this.host = host;
@@ -34,8 +33,8 @@ namespace ProcRoll
         /// <param name="environmentVariables">A dictionary of environment variables to be set for the running process.</param>
         /// <param name="startedStringMatch">A Regex query to identify a console message to indicate a process has fully started.</param>
         /// <param name="dependsOn">Method needed to stop the external process.</param>
-        /// <param name="useShellExecute"></param>
-        /// <param name="processActions"></param>
+        /// <param name="useShellExecute">Use ProcRoll.ProcessHost to run process./></param>
+        /// <param name="processActions">Instance of <see cref="ProcessActions"/> for configuring event handlers for processes.</param>
         /// <returns></returns>
         public ProcRollBuilder Add(string name,
                                    string fileName,
@@ -66,7 +65,7 @@ namespace ProcRoll
         /// </summary>
         /// <param name="name">Name of the definition.</param>
         /// <param name="hostedStartInfo">The settings for the process.</param>
-        /// <param name="processActions"></param>
+        /// <param name="processActions">Instance of <see cref="ProcessActions"/> for configuring event handlers for processes.</param>
         /// <returns></returns>
         public ProcRollBuilder Add(string name, HostedStartInfo hostedStartInfo, Func<IServiceProvider, ProcessActions>? processActions = null)
         {

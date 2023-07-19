@@ -1,7 +1,7 @@
 ﻿namespace ProcRoll;
 
 /// <summary>
-/// 
+/// Handlers for process events.
 /// </summary>
 public class ProcessActions
 {

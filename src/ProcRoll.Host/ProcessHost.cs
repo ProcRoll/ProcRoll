@@ -1,11 +1,10 @@
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.IO.Pipes;
 
 namespace ProcRoll;
 
 /// <summary>
-/// 
+/// Service for hosting ProcRoll process and communicating with controlling service.
 /// </summary>
 public class ProcessHost : BackgroundService
 {
@@ -16,12 +15,12 @@ public class ProcessHost : BackgroundService
     private Process? process;
 
     /// <summary>
-    /// 
+    /// Create instance of ProcessHost from dependency injection.
     /// </summary>
-    /// <param name="logger"></param>
-    /// <param name="hostConfigOptions"></param>
-    /// <param name="processStartInfoOptions"></param>
-    /// <param name="hostApplicationLifetime"></param>
+    /// <param name="logger">Instance of <see cref="ILogger{ProcessHost}"/></param>
+    /// <param name="hostConfigOptions">Instance of <see cref="IOptions{HostConfig}"/></param>
+    /// <param name="processStartInfoOptions">Instance of <see cref="IOptions{ProcessStartInfo}"/></param>
+    /// <param name="hostApplicationLifetime">Instance of <see cref="IHostApplicationLifetime"/></param>
     public ProcessHost(ILogger<ProcessHost> logger, IOptions<HostConfig> hostConfigOptions, IOptions<ProcessStartInfo> processStartInfoOptions, IHostApplicationLifetime hostApplicationLifetime)
     {
         this.logger = logger;
@@ -31,10 +30,9 @@ public class ProcessHost : BackgroundService
     }
 
     /// <summary>
-    /// 
+    /// Triggered when the application host is ready to start the service.
     /// </summary>
-    /// <param name="stoppingToken"></param>
-    /// <returns></returns>
+    /// <param name="stoppingToken">Indicates that the start process has been aborted.</param>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation("Starting process: {filename} {arguments}", processStartInfo.FileName, processStartInfo.Arguments);

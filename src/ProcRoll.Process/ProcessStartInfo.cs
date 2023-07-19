@@ -23,7 +23,7 @@ public class ProcessStartInfo
     public Dictionary<string, string> EnvironmentVariables { get; set; } = new();
 
     /// <summary>
-    /// 
+    /// Use ProcRoll.ProcessHost to run process.
     /// </summary>
     public bool UseShellExecute { get; set; } = false;
 
@@ -33,7 +33,7 @@ public class ProcessStartInfo
     public string? StartedStringMatch { get; set; }
 
     /// <summary>
-    /// 
+    /// Method to use to stop the process.
     /// </summary>
     public StopMethod StopMethod { get; set; } = StopMethod.Default;
 }

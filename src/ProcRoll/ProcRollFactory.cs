@@ -15,15 +15,15 @@ namespace ProcRoll
         /// <summary>
         /// Start a process using a named configuration.
         /// </summary>
-        /// <param name="name"></param>
-        /// <param name="args"></param>
+        /// <param name="name">Name of the ProcRoll configuration to start.</param>
+        /// <param name="args">Replacement values for argument placeholders.</param>
         /// <returns>Instance of <see cref="ProcRoll.Process"/> for started process.</returns>
         Task<Process> Start(string name, params object[] args);
         /// <summary>
         /// Stop a process instance.
         /// </summary>
-        /// <param name="name"></param>
-        /// <param name="process"></param>
+        /// <param name="name">Name of the ProcRoll configuration to stop.</param>
+        /// <param name="process">The Process instance to stop.</param>
         /// <returns></returns>
         Task Stop(string name, Process process);
     }
@@ -44,11 +44,11 @@ namespace ProcRoll
         /// <summary>
         /// Creates an instance <see cref="ProcRoll.ProcRollFactory"/> with injected dependencies.
         /// </summary>
-        /// <param name="logger"></param>
-        /// <param name="loggerFactory"></param>
-        /// <param name="serviceProvider"></param>
-        /// <param name="config"></param>
-        /// <param name="actions"></param>
+        /// <param name="logger">Instance of <see cref="ILogger"/></param>
+        /// <param name="loggerFactory">Instance of <see cref="ILoggerFactory"/></param>
+        /// <param name="serviceProvider">Instance of <see cref="IServiceProvider"/></param>
+        /// <param name="config">Instance of <see cref="IOptions{ProcRollConfiguration}"/></param>
+        /// <param name="actions">Instance of Dictionary{string, Func{IServiceProvider, ProcessActions}}</param>
         public ProcRollFactory(ILogger<ProcRollFactory> logger, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IOptions<ProcRollConfiguration> config, Dictionary<string, Func<IServiceProvider, ProcessActions>> actions)
         {
             this.logger = logger;
@@ -133,8 +133,8 @@ namespace ProcRoll
         /// <summary>
         /// Stop a process instance.
         /// </summary>
-        /// <param name="name"></param>
-        /// <param name="process">The process to stop.</param>
+        /// <param name="name">Name of the ProcRoll configuration to stop.</param>
+        /// <param name="process">The Process instance to stop.</param>
         public async Task Stop(string name, Process process)
         {
             if (process.Stopped) return;

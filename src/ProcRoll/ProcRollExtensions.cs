@@ -11,9 +11,9 @@ namespace ProcRoll
         /// <summary>
         /// Enable ProcRoll. Configuration is read from "ProcRoll" section.
         /// </summary>
-        /// <param name="host">IHostBuilder</param>
+        /// <param name="host">Instance of <see cref="IHostBuilder"/></param>
         /// <param name="configure">Delegate for configuring ProcRoll settings.</param>
-        /// <returns>IHostBuilder</returns>
+        /// <returns>Instance of <see cref="IHostBuilder"/></returns>
         public static IHostBuilder ConfigureProcRoll(this IHostBuilder host, Action<ProcRollBuilder> configure)
         {
             var actions = new Dictionary<string, Func<IServiceProvider, ProcessActions>>();
@@ -27,11 +27,11 @@ namespace ProcRoll
         /// <summary>
         /// Enable ProcRoll. Configuration is read from "ProcRoll" section.
         /// </summary>
-        /// <param name="host">IHostBuilder</param>
-        /// <returns>IHostBuilder</returns>
+        /// <param name="host">Instance of <see cref="IHostBuilder"/></param>
+        /// <returns>Instance of <see cref="IHostBuilder"/></returns>
         public static IHostBuilder ConfigureProcRoll(this IHostBuilder host) => ConfigureServices(host, new Dictionary<string, Func<IServiceProvider, ProcessActions>>());
 
-        private static IHostBuilder ConfigureServices(IHostBuilder host, Dictionary<string, Func<IServiceProvider, ProcessActions>> actions) => 
+        private static IHostBuilder ConfigureServices(IHostBuilder host, Dictionary<string, Func<IServiceProvider, ProcessActions>> actions) =>
             host.ConfigureServices((hostContext, services) =>
             {
                 services.AddOptions<ProcRollConfiguration>().BindConfiguration("ProcRoll");

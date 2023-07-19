@@ -1,5 +1,4 @@
 ﻿using System.IO.Pipes;
-using System.Runtime;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -26,12 +25,12 @@ public partial class Process : IDisposable, IAsyncDisposable
     private readonly TaskCompletionSource executing = new();
 
     /// <summary>
-    /// Start an external process.
+    /// Run an external process.
     /// </summary>
     /// <param name="fileName">Name of the external executable file.</param>
     /// <param name="arguments">Arguments to pass to the process.</param>
     /// <returns>Instance of <see cref='ProcRoll.Process'/> for started external process.</returns>
-    public static async Task<Process> Start(string fileName, string arguments = default!)
+    public static async Task<Process> Run(string fileName, string arguments = default!)
     {
         var process = new Process(new ProcessStartInfo { FileName = fileName, Arguments = arguments });
         await process.Start().ConfigureAwait(false);
@@ -39,13 +38,26 @@ public partial class Process : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
-    /// Start an external process.
+    /// Run an external process.
     /// </summary>
     /// <param name="startInfo">Instance of <see cref='ProcRoll.ProcessStartInfo'/> with start configuration for external process.</param>
-    /// <param name="actions"></param>
     /// <param name="args">Replacement values for argument placeholders.</param>
     /// <returns>Instance of <see cref='ProcRoll.Process'/> for started external process.</returns>
-    public static async Task<Process> Start(ProcessStartInfo startInfo, ProcessActions? actions = default, params object[] args)
+    public static async Task<Process> Run(ProcessStartInfo startInfo, params object[] args)
+    {
+        var process = new Process(startInfo);
+        await process.Start(args).ConfigureAwait(false);
+        return process;
+    }
+
+    /// <summary>
+    /// Run an external process.
+    /// </summary>
+    /// <param name="startInfo">Instance of <see cref='ProcRoll.ProcessStartInfo'/> with start configuration for external process.</param>
+    /// <param name="actions">Instance of <see cref="ProcessActions"/> for providing handlers for process events.</param>
+    /// <param name="args">Replacement values for argument placeholders.</param>
+    /// <returns>Instance of <see cref='ProcRoll.Process'/> for started external process.</returns>
+    public static async Task<Process> Run(ProcessStartInfo startInfo, ProcessActions actions, params object[] args)
     {
         var process = new Process(startInfo, actions);
         await process.Start(args).ConfigureAwait(false);
@@ -65,7 +77,7 @@ public partial class Process : IDisposable, IAsyncDisposable
     /// Initialize an instance of <see cref='ProcRoll.Process'/> for an external executable.
     /// </summary>
     /// <param name="startInfo">Instance of <see cref='ProcRoll.ProcessStartInfo'/> with start configuration for external process.</param>
-    /// <param name="actions"></param>
+    /// <param name="actions">Instance of <see cref="ProcessActions"/> for providing handlers for process events.</param>
     public Process(ProcessStartInfo startInfo, ProcessActions? actions = default)
     {
         StartInfo = startInfo;
@@ -214,7 +226,7 @@ public partial class Process : IDisposable, IAsyncDisposable
                 HandleConsoleOutput(msg, "Out");
             }
         }).ConfigureAwait(false);
-        
+
         _ = Task.Run(async () =>
         {
             await stdErrPipe.WaitForConnectionAsync().ConfigureAwait(false);
