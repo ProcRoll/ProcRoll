@@ -17,6 +17,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{F04259D1-B96
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProcRoll", "src\ProcRoll\ProcRoll.csproj", "{A7CB96AB-E115-49ED-B081-21E8739D06EA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1065199E-8282-44AA-A3D3-634025E2D831} = {1065199E-8282-44AA-A3D3-634025E2D831}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProcRoll.Process", "src\ProcRoll.Process\ProcRoll.Process.csproj", "{102D3835-275F-41FE-B54E-968DD624CCDE}"
 EndProject
@@ -30,7 +33,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProcRoll.Host", "src\ProcRo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "4.Actions", "demos\4.Actions\4.Actions.csproj", "{972D867A-DCB5-4CE4-ABDA-143F502C3978}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "5.WindowsService", "demos\5.WindowsService\5.WindowsService.csproj", "{068F6F21-26D2-477F-8527-78F19A40D2F5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "5.WindowsService", "demos\5.WindowsService\5.WindowsService.csproj", "{068F6F21-26D2-477F-8527-78F19A40D2F5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
