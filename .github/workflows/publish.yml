@@ -33,11 +33,6 @@ jobs:
         path: |
           ./src/**/*.nupkg
           ./src/**/*.snupkg
-            
-    - name: Test Var
-      run: echo This is a build for $env:ORG_NAME_VAL
-      env:
-        ORG_NAME_VAL: ${{ vars.ORG_NAME }}
         
     - name: Push to Nuget
       run: dotnet nuget push .\src\**\*.nupkg -s https://api.nuget.org/v3/index.json -k $env:API_KEY
