@@ -23,7 +23,7 @@ public class ProcessTests
         try
         {
             TestContext.WriteLine($"{Time} Writing to {outFile}");
-            var process = await Process.Run("dotnet", $"ProcRoll.Tests.Echo.dll \"Success\" --file \"{outFile}\"");
+            var process = Process.Run("dotnet", $"ProcRoll.Tests.Echo.dll \"Success\" --file \"{outFile}\"");
             TestContext.WriteLine($"{Time} Waiting for write to finish");
             await process.Executing;
             TestContext.WriteLine($"{Time} Reading file and verifying contents");
@@ -43,7 +43,7 @@ public class ProcessTests
         TestContext.WriteLine($"{Time} Starting process");
         var startInfo = new ProcessStartInfo { FileName = "dotnet", Arguments = $"ProcRoll.Tests.Echo.dll \"Success\"" };
         var actions = new ProcessActions { StdOut = m => outText.Append(m) };
-        var process = await Process.Run(startInfo, actions);
+        var process = Process.Run(startInfo, actions);
         TestContext.WriteLine($"{Time} Waiting for write to finish");
         await process.Executing;
         TestContext.WriteLine($"{Time} Reading output and verifying contents");
@@ -66,7 +66,7 @@ public class ProcessTests
             StopMethod = stopMethod
         };
         var actions = new ProcessActions { StdOut = TestContext.WriteLine };
-        var process = await Process.Run(startInfo);
+        var process = Process.Run(startInfo);
         await process.Starting;
         TestContext.WriteLine($"{Time} Stopping process");
         await process.Stop();

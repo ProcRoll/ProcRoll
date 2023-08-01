@@ -30,10 +30,10 @@ public partial class Process : IDisposable, IAsyncDisposable
     /// <param name="fileName">Name of the external executable file.</param>
     /// <param name="arguments">Arguments to pass to the process.</param>
     /// <returns>Instance of <see cref='ProcRoll.Process'/> for started external process.</returns>
-    public static async Task<Process> Run(string fileName, string arguments = default!)
+    public static Process Run(string fileName, string arguments = default!)
     {
         var process = new Process(new ProcessStartInfo { FileName = fileName, Arguments = arguments });
-        await process.Start().ConfigureAwait(false);
+        process.Start().ConfigureAwait(false);
         return process;
     }
 
@@ -43,10 +43,10 @@ public partial class Process : IDisposable, IAsyncDisposable
     /// <param name="startInfo">Instance of <see cref='ProcRoll.ProcessStartInfo'/> with start configuration for external process.</param>
     /// <param name="args">Replacement values for argument placeholders.</param>
     /// <returns>Instance of <see cref='ProcRoll.Process'/> for started external process.</returns>
-    public static async Task<Process> Run(ProcessStartInfo startInfo, params object[] args)
+    public static Process Run(ProcessStartInfo startInfo, params object[] args)
     {
         var process = new Process(startInfo);
-        await process.Start(args).ConfigureAwait(false);
+        process.Start(args).ConfigureAwait(false);
         return process;
     }
 
@@ -57,10 +57,10 @@ public partial class Process : IDisposable, IAsyncDisposable
     /// <param name="actions">Instance of <see cref="ProcessActions"/> for providing handlers for process events.</param>
     /// <param name="args">Replacement values for argument placeholders.</param>
     /// <returns>Instance of <see cref='ProcRoll.Process'/> for started external process.</returns>
-    public static async Task<Process> Run(ProcessStartInfo startInfo, ProcessActions actions, params object[] args)
+    public static Process Run(ProcessStartInfo startInfo, ProcessActions actions, params object[] args)
     {
         var process = new Process(startInfo, actions);
-        await process.Start(args).ConfigureAwait(false);
+        process.Start(args).ConfigureAwait(false);
         return process;
     }
 
@@ -115,6 +115,7 @@ public partial class Process : IDisposable, IAsyncDisposable
     public StreamWriter StandardInput => process?.StandardInput ?? throw new InvalidOperationException("Process not started");
 
     internal bool IsShelled { get; set; } = false;
+    internal string? Name { get; set; } = default;
 
     /// <summary>
     /// Start the external process.
@@ -278,7 +279,7 @@ public partial class Process : IDisposable, IAsyncDisposable
         process = new System.Diagnostics.Process { StartInfo = processStartInfo };
         process.Start();
 
-        if (startedRegex == null)
+        if (StartInfo.StartedStringMatch == null)
             starting.SetResult();
 
         await controlPipe.WaitForConnectionAsync().ConfigureAwait(false);
@@ -375,19 +376,17 @@ public partial class Process : IDisposable, IAsyncDisposable
             {
                 if (Started && !Stopped)
                 {
-                    await Stop();
+                    await Stop().ConfigureAwait(false);
                 }
-                if (controlPipe != null)
-                    await controlPipe.DisposeAsync().ConfigureAwait(false);
-                if (stdOutPipe != null)
-                    await stdOutPipe.DisposeAsync().ConfigureAwait(false);
-                if (stdErrPipe != null)
-                    await stdErrPipe.DisposeAsync().ConfigureAwait(false);
-                if (eventsPipe != null)
-                    await eventsPipe.DisposeAsync().ConfigureAwait(false);
+                await Task.WhenAll(
+                    controlPipe?.DisposeAsync().AsTask() ?? Task.CompletedTask,
+                    stdOutPipe?.DisposeAsync().AsTask() ?? Task.CompletedTask,
+                    stdErrPipe?.DisposeAsync().AsTask() ?? Task.CompletedTask,
+                    eventsPipe?.DisposeAsync().AsTask() ?? Task.CompletedTask
+                ).ConfigureAwait(false);
             }
 
-            if (process != null && !process.HasExited)
+            if (process?.HasExited is false)
             {
                 process.Kill();
             }
@@ -410,7 +409,7 @@ public partial class Process : IDisposable, IAsyncDisposable
     /// </summary>
     public void Dispose()
     {
-        Dispose(disposing: true).RunSynchronously();
+        Dispose(disposing: true).Wait();
         GC.SuppressFinalize(this);
     }
 
