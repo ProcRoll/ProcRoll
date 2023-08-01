@@ -6,7 +6,7 @@ namespace ProcRoll;
 /// <summary>
 /// Service for hosting ProcRoll process and communicating with controlling service.
 /// </summary>
-public class ProcessHost : BackgroundService
+public partial class ProcessHost : BackgroundService
 {
     private readonly ILogger<ProcessHost> logger;
     private readonly IHostApplicationLifetime hostApplicationLifetime;
@@ -35,7 +35,10 @@ public class ProcessHost : BackgroundService
     /// <param name="stoppingToken">Indicates that the start process has been aborted.</param>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("Starting process: {filename} {arguments}", processStartInfo.FileName, processStartInfo.Arguments);
+        if (processStartInfo.Arguments == null)
+            LogStarting(processStartInfo.FileName);
+        else
+            LogStarting(processStartInfo.FileName, processStartInfo.Arguments);
 
         using var controlPipe = new NamedPipeClientStream(".", string.Concat(Process.PIPE_PREFIX, hostConfig.ID), PipeDirection.In);
         using var stdOutPipe = new NamedPipeClientStream(".", string.Concat(Process.PIPE_PREFIX, hostConfig.ID, Process.PIPE_STDOUT), PipeDirection.Out);
@@ -53,8 +56,8 @@ public class ProcessHost : BackgroundService
 
         var actions = new ProcessActions
         {
-            StdOut = swOut.WriteLine,
-            StdErr = swErr.WriteLine
+            StdOut = stdOutPipe.IsConnected ? swOut.WriteLine : Console.Out.WriteLine,
+            StdErr = stdErrPipe.IsConnected ? swErr.WriteLine : Console.Error.WriteLine,
         };
 
         process = new Process(processStartInfo, actions) { IsShelled = true };
@@ -78,5 +81,22 @@ public class ProcessHost : BackgroundService
                     break;
             }
         }
+
+
     }
+
+    /// <summary>
+    /// Log message for starting.
+    /// </summary>
+    /// <param name="filename">Name of the external executable file.</param>
+    [LoggerMessage(EventId = 1000, Level = LogLevel.Information, Message = "Starting process: {filename}")]
+    public partial void LogStarting(string filename);
+
+    /// <summary>
+    /// Log message for starting.
+    /// </summary>
+    /// <param name="filename">Name of the external executable file.</param>
+    /// <param name="arguments">Arguments to pass to the process.</param>
+    [LoggerMessage(EventId = 1001, Level = LogLevel.Information, Message = "Starting process: {filename} {arguments}")]
+    public partial void LogStarting(string filename, string arguments);
 }

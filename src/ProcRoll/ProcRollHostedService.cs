@@ -42,7 +42,7 @@ namespace ProcRoll
 
             logger.LogDebug("Stopping hosted ProcRoll processes");
 
-            await Task.WhenAll(hostedProcesses.AsParallel().Select(p => ProcRollFactory.Stop(p.Key, p.Value)).ToArray());
+            await Task.WhenAll(hostedProcesses.AsParallel().Select(p => ProcRollFactory.Stop(p.Value)).ToArray());
 
             logger.LogDebug("Stopped hosted ProcRoll processes");
         }
