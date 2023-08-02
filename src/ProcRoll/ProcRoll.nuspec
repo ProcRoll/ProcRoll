@@ -16,10 +16,10 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="bin\$configuration$\**\*.dll" target="lib" />
-    <file src="bin\$configuration$\**\*.exe" target="lib" />
-    <file src="bin\$configuration$\**\*.xml" target="lib" />
-    <file src="bin\$configuration$\**\*.pdb" target="lib" />
+    <file src="bin\$configuration$\net7.0\*.dll" target="lib\net7.0" />
+    <file src="bin\$configuration$\net7.0\*.exe" target="lib\net7.0" />
+    <file src="bin\$configuration$\net7.0\*.xml" target="lib\net7.0" />
+    <file src="bin\$configuration$\net7.0\*.pdb" target="lib\net7.0" />
     <file src="..\..\content\README.md" target="docs" />
   </files>
 </package>
