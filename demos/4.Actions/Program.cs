@@ -7,12 +7,12 @@ IHost host = Host.CreateDefaultBuilder(args)
         .AddSimpleConsole(configure => configure.SingleLine = true))
     .ConfigureProcRoll(configureProcRoll => configureProcRoll
         .Add("Echo1",
-             "dotnet",
-             $"{AppContext.BaseDirectory}ProcRoll.Tests.Echo.dll \"Success 1\" --repeat",
+             "CMD",
+             $"/C \"FOR /L %i IN (1,1,10) DO ECHO Success 1.%i & TIMEOUT 1\"",
              StartMode.Background,
              StopMethod.CtrlC,
              startedStringMatch: "Success",
-             useShellExecute: true,
+             //useShellExecute: true,
              processActions: (services) =>
              {
                  var logger = services.GetService<ILoggerFactory>()!.CreateLogger("ProcRoll.Echo1");
@@ -27,11 +27,11 @@ IHost host = Host.CreateDefaultBuilder(args)
                  };
              })
         .Add("Echo2",
-             "dotnet",
-             $"{AppContext.BaseDirectory}ProcRoll.Tests.Echo.dll \"Success 2\" --repeat",
+             "CMD",
+             $"/C \"FOR /L %i IN (1,1,10) DO ECHO Success 2.%i & TIMEOUT 1\"",
              StartMode.Hosted,
              StopMethod.CtrlC,
-             dependsOn: new[] { "Echo1" },
+             //dependsOn: new[] { "Echo1" },
              useShellExecute: true,
              processActions: (services) =>
              {
